@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Usuarios - Sistema IoT{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="margin:0;"><i class="fas fa-users"></i> Gestión de Usuarios</h3>
+        <button class="btn-agregar btn-primary" id="btnCrearUsuario">
+            <i class="fas fa-plus"></i> Nuevo
+        </button>
+    </div>
+    
+    <p>Administra los usuarios del sistema IoT.</p>
+
+    <div id="tabla-usuarios" class="data-table-container">
+        <p style="padding: 1rem;">Cargando datos de usuarios...</p>
+    </div>
+
+    <div id="formulario-usuario" style="display: none; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Pasamos el token de Django a una variable global para que usuarios.js pueda usarlo
+        window.API_TOKEN = "{{ api_token|escapejs }}";
+    </script>
+    
+    <script src="{% static 'js/usuarios.js' %}"></script>
+{% endblock %}

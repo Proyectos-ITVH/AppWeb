@@ -1,0 +1,782 @@
+/* ===== 1. VARIABLES (TEMA HÍBRIDO - SIDEBAR OSCURO ORIGINAL) ===== */
+:root {
+  /* Color de acento */
+  --primary: #3498db;
+  --primary-hover: #2980b9;
+
+  /* Fondos */
+  --bg-light: #f4f7fa;     /* Fondo de contenido (claro) */
+  --bg-card: #ffffff;     /* Fondo de tarjetas (blanco) */
+  --bg-sidebar: #2c3e50;  /* Fondo de menú (OSCURO) */
+  --bg-sidebar-hover: #34495e; /* Hover en menú */
+
+  /* Bordes */
+  --border-color: #e6e9ee; /* Borde claro para contenido */
+  --sidebar-border-color: #34495e; /* Borde oscuro para sidebar */
+
+  /* Texto */
+  --text-dark: #2c3e50;    /* Texto principal (oscuro en contenido) */
+  --text-light: #ecf0f1;  /* Texto en menú (claro) */
+  --text-muted: #8492a6;   /* Texto secundario (gris) */
+
+  /* Estado */
+  --success: #2ecc71;
+  --danger: #e74c3c;
+  --warning: #f39c12;
+
+  /* Sombra y Tamaño */
+  --border-radius: 8px;
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Sombra sutil */
+  --transition: 0.2s ease-in-out;
+
+  /* Asignaciones */
+  --navbar-bg: var(--bg-sidebar);
+  --inactive: var(--text-muted);
+  --paused: var(--text-muted);
+}
+
+/* ===== 2. RESET Y BODY ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  color: var(--text-dark); /* Texto oscuro por defecto (para contenido) */
+  min-height: 100vh;
+  background-color: var(--bg-light); /* Fondo claro */
+  margin: 0;
+}
+
+/* ===== 3. LAYOUT (SIDEBAR FIJO) ===== */
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex-grow: 1;
+  padding: 2rem;
+  position: relative;
+}
+
+.mobile-header {
+  display: none; /* Oculto en desktop */
+}
+
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+}
+.overlay.active {
+  display: block;
+}
+
+
+/* ===== 4. MENÚ (SIDEBAR OSCURO) ===== */
+.sidebar-nav {
+  width: 300px;
+  flex-shrink: 0;
+  background-color: var(--bg-sidebar); /* Fondo oscuro */
+  color: var(--text-light); /* Texto claro */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: sticky;
+  top: 0;
+  transition: all var(--transition);
+  
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--sidebar-border-color); /* Borde oscuro */
+}
+.sidebar-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-light); /* Texto claro */
+}
+
+.sidebar-close-btn {
+  display: none; /* Solo para móvil */
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.navbar-nav {
+  flex-grow: 1; /* Empuja el perfil hacia abajo */
+  margin-top: 1rem;
+}
+.navbar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.navbar-nav li {
+  margin: 0;
+}
+.navbar-nav a {
+  color: #bdc3c7; /* Texto de link (gris claro) */
+  font-weight: 500;
+  text-decoration: none;
+  padding: 1rem 1.5rem;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-left: 4px solid transparent;
+}
+.navbar-nav a:hover {
+  background-color: var(--bg-sidebar-hover);
+  color: var(--text-light);
+}
+.navbar-nav a.active {
+  background-color: var(--bg-sidebar-hover);
+  color: var(--text-light);
+  font-weight: 600;
+  border-left-color: var(--primary); /* Línea azul activa */
+}
+
+/* Perfil (al fondo) */
+.navbar-profile {
+  padding: 1rem;
+  border-top: 1px solid var(--sidebar-border-color); /* Borde oscuro */
+  margin-top: auto; /* Asegura que esté al final */
+  position: relative; /* Needed for absolute positioning of dropdown */
+}
+.navbar-profile details summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+  transition: background-color var(--transition);
+  color: var(--text-light); /* Texto claro */
+}
+.navbar-profile details summary i { font-size: 1.25rem; }
+.navbar-profile details summary:hover,
+.navbar-profile details[open] summary {
+  background-color: var(--bg-sidebar-hover);
+}
+
+/* Menú desplegable del perfil */
+.navbar-profile details ul {
+  list-style: none;
+  padding: 0.5rem 0; /* Padding vertical */
+  margin: 0; /* Sin margen */
+  /* Aparece hacia ARRIBA */
+  position: absolute;
+  bottom: calc(100% + 5px); /* Justo encima del summary */
+  left: 0.5rem;
+  right: 0.5rem;
+  background: var(--bg-sidebar-hover); /* Fondo un poco más claro que el sidebar */
+  border: 1px solid var(--sidebar-border-color);
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.2); /* Sombra hacia arriba */
+  border-radius: var(--border-radius);
+  z-index: 10;
+}
+.navbar-profile details ul li a {
+  color: var(--text-light);
+  text-decoration: none;
+  padding: 0.75rem 1rem;
+  display: block;
+  border-radius: 4px; /* Redondeo leve */
+  white-space: nowrap; /* Prevent wrapping */
+}
+.navbar-profile details ul li a:hover {
+  background-color: var(--primary); /* Fondo azul al pasar el ratón */
+}
+
+
+/* ===== 5. TARJETAS (CONTENIDO CLARO) ===== */
+.card {
+  background: var(--bg-card); /* Fondo blanco */
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+}
+.card h1, .card h2, .card h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: var(--text-dark);
+}
+.card p {
+  margin-bottom: 1.5rem;
+  color: var(--text-muted);
+}
+
+/* ===== 6. DASHBOARD CARDS (CONTENIDO CLARO) ===== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+.dashboard-card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+  text-align: left;
+}
+.dashboard-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.07);
+}
+.dashboard-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: var(--primary);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #eaf5fc; /* Fondo azul claro */
+  border-radius: 50%;
+}
+.dashboard-value {
+  font-size: 2rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-dark);
+}
+.dashboard-value.value-good { color: var(--success); }
+.dashboard-value.value-warning { color: var(--warning); }
+.dashboard-value.value-danger { color: var(--danger); }
+.dashboard-label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+.last-check {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: transparent;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  border: 1px solid var(--border-color);
+}
+
+
+/* ===== 7. PÁGINAS DE LOGIN Y REGISTRO ===== */
+body.login-page, body.register-page {
+  /* Volvemos al gradiente oscuro para estas páginas */
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+.login-container, .register-container {
+  background: var(--bg-card); /* Tarjeta blanca */
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Sombra más fuerte */
+  border: none;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+}
+.login-header, .register-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+.login-header h2, .register-header h2 { color: var(--text-dark); }
+.links {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+.links a {
+  color: var(--primary);
+  text-decoration: none;
+  margin: 0 10px;
+  font-size: 14px;
+}
+.links a:hover { text-decoration: underline; }
+
+
+/* ===== 8. FORMULARIOS (CONTENIDO CLARO) ===== */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.form-group label {
+  font-weight: 500;
+  color: var(--text-dark);
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  background: #f9fafb; /* Fondo input casi blanco */
+  color: var(--text-dark);
+  border-radius: 6px;
+  font-size: 16px;
+  transition: all var(--transition);
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--primary);
+  background: var(--bg-card);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+/* ===== 9. BOTONES ===== */
+/* (Se mantienen los estilos anteriores, son consistentes) */
+.btn, .login-btn, .submit-btn, .back-btn, .btn-primary,
+.btn-agregar, .btn-actualizar, .btn-guardar, .btn-cancelar,
+.historial-button, .btn-editar, .btn-eliminar {
+  padding: 12px 20px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+/* Botón Primario (Color) */
+.login-btn, .submit-btn, .btn-primary, .btn-guardar, .btn-agregar,
+.historial-button, .btn-editar {
+  background-color: var(--primary);
+  color: var(--text-light);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.login-btn:hover, .submit-btn:hover, .btn-primary:hover, .btn-guardar:hover,
+.btn-agregar:hover, .historial-button:hover, .btn-editar:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+/* Botón Secundario (Claro) */
+.back-btn, .btn-secondary, .btn-cancelar {
+  background-color: var(--bg-card);
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
+}
+.back-btn:hover, .btn-secondary:hover, .btn-cancelar:hover {
+  background-color: var(--bg-light);
+}
+/* Botón de Peligro */
+.btn-danger, .btn-eliminar {
+  background-color: var(--danger);
+  color: var(--text-light);
+}
+.btn-danger:hover, .btn-eliminar:hover {
+  background-color: #c0392b;
+}
+
+/* Spinner (para botones) */
+.spinner {
+  display: none;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+  margin-left: 10px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+
+/* ===== 10. TABLAS (CONTENIDO CLARO) ===== */
+.data-table-container {
+  margin-top: 20px;
+  background-color: var(--bg-card);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+  overflow: hidden;
+}
+.table-container { overflow-x: auto; max-height: 400px; }
+table { width: 100%; border-collapse: collapse; }
+th, td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+th {
+  background-color: var(--bg-light);
+  position: sticky;
+  top: 0;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+td { color: var(--text-dark); }
+.acciones button { padding: 8px 12px; }
+
+/* ===== 11. ALERTAS (MODAL) ===== */
+.alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(44, 62, 80, 0.8); /* Overlay oscuro semitransparente */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050; /* Por encima de todo */
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.alert-overlay.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+.alert-box {
+  background: var(--bg-card); /* Fondo blanco */
+  border-radius: var(--border-radius);
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2); /* Sombra pronunciada */
+}
+
+.alert-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.alert-icon {
+  font-size: 2rem;
+  color: var(--danger); /* Rojo */
+  margin-right: 1rem;
+}
+
+.alert-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-dark); /* Texto oscuro */
+  margin: 0;
+}
+
+.alert-message {
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+  color: var(--text-muted); /* Texto gris */
+}
+
+.alert-parameters {
+  background: var(--bg-light); /* Fondo gris claro */
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.parameter-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-dark);
+}
+
+.parameter-item:last-child {
+  border-bottom: none;
+}
+.parameter-item span {
+  color: var(--text-muted);
+}
+.parameter-item strong {
+  color: var(--danger); /* Valor crítico en rojo */
+}
+
+.alert-buttons {
+  display: flex;
+  justify-content: flex-end;
+}
+
+
+/* ===== 12. RESPONSIVE (ESTILO ÚNICO Y LIMPIO PARA HAMBURGUESA) ===== */
+@media (max-width: 768px) {
+  
+  /* 1. Barra superior azul profesional */
+  .mobile-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-start; /* Alinea botón y texto a la izquierda */
+    gap: 15px;
+    padding: 0.5rem 1rem;
+    height: 60px; /* Altura fija para consistencia */
+    background: #2c3e50; /* Azul principal de tu tema */
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Sombra suave */
+  }
+
+  /* 2. Estilo específico para el botón de hamburguesa */
+  .mobile-toggler {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    
+    /* RESET TOTAL: Quitamos cualquier estilo de botón heredado */
+    background: transparent !important; 
+    border: none !important;
+    box-shadow: none !important;
+    
+    /* Estilo del icono */
+    color: white !important; /* Icono blanco para contraste */
+    font-size: 1.8rem;       /* Tamaño grande y fácil de ver */
+    
+    /* Área de toque */
+    padding: 8px !important; /* Espacio alrededor del icono */
+    width: 45px;             /* Ancho fijo */
+    height: 45px;            /* Alto fijo */
+    cursor: pointer;
+    border-radius: 50% !important; /* Forma circular */
+    transition: background-color 0.2s ease;
+  }
+
+  /* Efecto visual al tocar el botón */
+  .mobile-toggler:active {
+    background-color: rgba(255, 255, 255, 0.2) !important; /* Fondo blanco semitransparente */
+  }
+
+  /* 3. Nombre de la marca al lado del botón */
+  .mobile-brand h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: white !important;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar-nav {
+    position: fixed;
+    left: -280px; /* Oculto */
+    width: 280px;
+    z-index: 1001;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+    border-right: none;
+  }
+  .sidebar-nav.active {
+    left: 0; 
+  }
+
+
+  .sidebar-close-btn {
+    display: block;
+    color: var(--text-light); 
+  }
+
+  
+}
+
+
+.profile-card { background: var(--bg-card); border: 1px solid var(--border-color); }
+.profile-header { border-bottom: 1px solid var(--border-color); }
+.profile-avatar { border: 4px solid var(--primary); background-color: var(--bg-light); color: var(--text-muted); }
+.info-value { color: var(--text-dark); border-bottom: 1px solid var(--border-color); }
+.edit-form { background: var(--bg-light); }
+
+.estanque-card { background: var(--bg-card); border: 1px solid var(--border-color); }
+.estanque-card.principal { border: 2px solid var(--primary); box-shadow: 0 0 15px rgba(52, 152, 219, 0.2); }
+.status-active { background-color: #e8f5e9; color: #2e7d32; }
+.status-inactive { background-color: #fbebee; color: #c62828; }
+.status-paused { background-color: #fff8e1; color: #e67e22; }
+.estanque-data-item { background-color: var(--bg-light); }
+
+
+#downloadOptionsContainer { background: var(--bg-light); }
+
+/* ... resto de tu CSS anterior ... */
+
+.estanque-data-item { background-color: var(--bg-light); }
+
+
+/* ===== 13. CONTENEDOR DE OPCIONES DE DESCARGA (MODIFICADO) ===== */
+#downloadOptionsContainer {
+  background: var(--bg-light); /* Esto ya lo tenías, se queda activo */
+  
+  /* ===== ESTILOS SUGERIDOS (COMENTADOS) ===== */
+  /* Descomenta estas líneas para darle estructura igual al resto del tema */
+  /*
+  padding: 15px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-top: 15px;
+  display: none; /* O 'flex' si quieres que siempre esté visible */
+  gap: 10px;     /* Espacio entre botones si hay varios */
+  flex-wrap: wrap;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  
+}
+/* Estilos específicos para la página de ajustes */
+.ajustes-seccion {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.ajustes-seccion:last-child {
+  border-bottom: none;
+}
+.form-ajustes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  align-items: end;
+}
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+/* Notificación Flotante (Toast) */
+.notificacion {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--success);
+  color: white;
+  padding: 15px 25px;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s ease-in-out;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.notificacion.mostrar {
+  transform: translateY(0);
+  opacity: 1;
+}
+.notificacion.error {
+  background-color: var(--danger);
+}
+
+/* === ESTILOS DE PERFIL === */
+.profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    background: var(--bg-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem auto;
+    overflow: hidden;
+    border: 3px solid var(--primary);
+    cursor: pointer;
+    position: relative;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-avatar span {
+    font-size: 3rem;
+    color: var(--text-muted);
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.info-group {
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--bg-light);
+    padding-bottom: 0.5rem;
+}
+
+.info-label {
+    font-weight: bold;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    display: block;
+}
+
+.info-value {
+    color: var(--text-dark);
+}
+
+/* Quita el nombre AcuaTech y el borde del menú lateral */
+.sidebar-header h2 {
+  display: none !important;
+}
+
+.sidebar-header {
+  padding: 0.5rem !important; /* Espacio mínimo para el botón X */
+  border-bottom: none !important;
+  justify-content: flex-end !important; /* Empuja la X a la derecha */
+}
+
+/* Opcional: Si quieres quitar TODO el bloque incluyendo la X en PC */
+@media (min-width: 992px) {
+  .sidebar-header {
+      display: none !important;
+  }
+  .navbar-nav {
+      margin-top: 0 !important; /* Sube los links hasta el tope */
+  }
+}
+

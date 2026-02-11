@@ -1,0 +1,91 @@
+{% load static %} <!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Registro</title>
+  
+  {% if success_message %}
+    <meta http-equiv="refresh" content="4;url={% url 'login' %}">
+  {% endif %}
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+  
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body class="register-page"> <div class="register-container">
+    <div class="register-header">
+      <h2>Crear Cuenta</h2>
+      <p>Regístrate para acceder al sistema IoT</p>
+    </div>
+
+    {% if success_message %}
+      <div id="successSection">
+        <div class="message success" style="display: block;"> ¡Registro exitoso! Tu cuenta ha sido creada. 
+          Redirigiendo al inicio de sesión...
+        </div>
+      </div>
+    
+    {% else %}
+      
+      <form id="registerForm" method="POST">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="email">Correo electrónico</label>
+          <input type="email" id="email" name="email" placeholder="tucorreo@dominio.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirmar Contraseña</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">
+          <span>Registrarse</span>
+          <span class="spinner" id="spinner"></span>
+        </button>
+
+        {% if error_message %}
+          <div id="mensaje" class="message error" style="display: block;">
+            {{ error_message }}
+          </div>
+        {% endif %}
+
+        <div class="links">
+          <a href="{% url 'login' %}">¿Ya tienes una cuenta? Inicia sesión</a>
+        </div>
+      </form>
+      
+    {% endif %}
+    
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const registerForm = document.getElementById('registerForm');
+      const submitBtn = document.getElementById('submitBtn');
+      const spinner = document.getElementById('spinner');
+
+      if (registerForm && submitBtn) {
+        registerForm.addEventListener('submit', function() {
+          submitBtn.disabled = true;
+          spinner.style.display = 'inline-block';
+          
+          const btnText = submitBtn.querySelector('span:first-child');
+          if (btnText) {
+            btnText.textContent = 'Registrando...';
+          }
+        });
+      }
+    });
+  </script>
+
+</body>
+</html>

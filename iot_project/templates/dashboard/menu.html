@@ -1,0 +1,59 @@
+{% load static %}
+
+<div class="sidebar-header">
+    <h2><i class="fas fa-water"></i> AcuaTech</h2>
+    <button class="sidebar-close-btn" id="closeSidebar">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+
+<div class="navbar-nav">
+    <ul>
+        <li>
+            <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+        </li>
+
+        {% if request.session.user.rolUser == 'admin' %}
+            
+            <li class="menu-label">ADMINISTRACIÓN</li> <li>
+                <a href="{% url 'usuarios' %}" class="{% if request.resolver_match.url_name == 'usuarios' %}active{% endif %}">
+                    <i class="fas fa-users"></i> Usuarios
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'informes' %}" class="{% if request.resolver_match.url_name == 'informes' %}active{% endif %}">
+                    <i class="fas fa-chart-bar"></i> Informes
+                </a>
+            </li>
+            
+            <li>
+                <a href="{% url 'historial' %}" class="{% if request.resolver_match.url_name == 'historial' %}active{% endif %}">
+                    <i class="fas fa-history"></i> Historial
+                </a>
+            </li>
+            
+            <li>
+                <a href="{% url 'ajustes' %}" class="{% if request.resolver_match.url_name == 'ajustes' %}active{% endif %}">
+                    <i class="fas fa-cog"></i> Ajustes
+                </a>
+            </li>
+        {% endif %}
+        </ul>
+
+    <div class="navbar-profile">
+        <details>
+            <summary>
+                <i class="fas fa-user-circle"></i> 
+                {{ request.session.user.nombre|default:"Usuario" }}
+                <i class="fas fa-chevron-up" style="margin-left: auto; font-size: 0.8rem;"></i>
+            </summary>
+            <ul>
+                <li><a href="{% url 'perfil' %}"><i class="fas fa-user"></i> Mi perfil</a></li>
+                <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>
+            </ul>
+        </details>
+    </div>
+</div>

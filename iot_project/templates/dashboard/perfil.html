@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Perfil de Usuario - AcuaTech{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <div class="card profile-card">
+        
+        <div class="profile-header">
+            <div class="profile-avatar" id="avatarContainer" title="Clic para cambiar foto">
+                <span id="avatarPlaceholder">👤</span>
+                <img id="avatarImage" style="display: none;" alt="Avatar del usuario">
+                <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
+            </div>
+            <h2 id="userName" style="margin-bottom: 0.5rem;">Cargando...</h2>
+            <p style="color: var(--text-muted); margin: 0;">Perfil de Usuario</p>
+        </div>
+
+        <div id="mensaje" class="message" style="display: none; padding: 10px; margin-bottom: 15px; border-radius: 5px; text-align: center;"></div>
+
+        <div class="profile-info">
+            <div class="info-group">
+                <span class="info-label">Rol</span>
+                <div class="info-value" id="role">No especificado</div>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Nombre completo</span>
+                <div class="info-value" id="displayName">No especificado</div>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Correo electrónico</span>
+                <div class="info-value" id="email">No especificado</div>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Teléfono</span>
+                <div class="info-value" id="phone">No especificado</div>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Fecha de registro</span>
+                <div class="info-value" id="signupDate">No especificado</div>
+            </div>
+        </div>
+
+        <div class="edit-form" id="editForm" style="display: none; margin-top: 2rem; padding-top: 1rem; border-top: 2px dashed var(--border-color);">
+            <h3><i class="fas fa-user-edit"></i> Actualizar información</h3>
+            <p>Completa los campos para actualizar tu perfil.</p>
+
+            <form id="profileForm">
+                <div class="form-group">
+                    <label for="displayNameInput">Nombre completo *</label>
+                    <input type="text" id="displayNameInput" placeholder="Ingresa tu nombre completo" required>
+                </div>
+                <div class="form-group">
+                    <label for="phoneInput">Teléfono</label>
+                    <input type="tel" id="phoneInput" placeholder="Ingresa tu número de teléfono">
+                </div>
+                <button type="submit" class="btn-primary" id="submitBtn" style="width: 100%;">
+                    <span>Actualizar perfil</span>
+                    <span class="spinner" id="spinner" style="display:none; margin-left: 10px;">
+                        <i class="fas fa-circle-notch fa-spin"></i>
+                    </span>
+                </button>
+            </form>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    window.API_TOKEN = "{{ api_token|escapejs }}";
+</script>
+<script src="{% static 'js/ingresoPerfil.js' %}"></script>
+{% endblock %}

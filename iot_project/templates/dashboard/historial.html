@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historial de Datos - AcuaTech{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos específicos de Historial */
+    .historial-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        align-items: flex-end;
+        background: var(--bg-light);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+    }
+    .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+        margin-bottom: 2rem;
+    }
+    #downloadOptionsContainer {
+        display: none;
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        border: 2px dashed var(--border-color);
+        margin-bottom: 1.5rem;
+    }
+    .param-checkbox { display: inline-block; margin-right: 15px; font-weight: 600; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="historial-header">
+        <h3><i class="fas fa-history"></i> Historial de Datos</h3>
+        <p class="subtitle">Datos de calidad del agua a lo largo del tiempo</p>
+    </div>
+
+    <div class="historial-controls">
+        <div class="form-group">
+            <label for="tankSelect">Estanque:</label>
+            <select id="tankSelect" style="width: 180px;">
+                <option value="">Cargando...</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="dataLimit">Límite:</label>
+            <select id="dataLimit">
+                <option value="50">50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+                <option value="500">500</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="startDate">Desde:</label>
+            <input type="date" id="startDate">
+        </div>
+        
+        <div class="form-group">
+            <label for="endDate">Hasta:</label>
+            <input type="date" id="endDate">
+        </div>
+        
+        <button class="btn-primary" id="applyDateRange" style="height: 45px;">
+            <i class="fas fa-check"></i> Aplicar
+        </button>
+        
+        <button class="btn-secondary" id="downloadOptionsBtn" style="margin-left: auto; height: 45px;">
+            <i class="fas fa-download"></i> Descargar
+        </button>
+    </div>
+    
+    <div id="downloadOptionsContainer">
+        <div style="width: 100%; margin-bottom: 10px;">
+            <strong>Seleccionar parámetros a exportar:</strong>
+        </div>
+        <div class="param-checkbox">
+            <input type="checkbox" id="paramTemperatura" checked> <label for="paramTemperatura">Temperatura</label>
+        </div>
+        <div class="param-checkbox">
+            <input type="checkbox" id="paramTDS" checked> <label for="paramTDS">TDS</label>
+        </div>
+        <div class="param-checkbox">
+            <input type="checkbox" id="paramOxigeno" checked> <label for="paramOxigeno">Oxígeno</label>
+        </div>
+        <div class="param-checkbox">
+            <input type="checkbox" id="paramPH" checked> <label for="paramPH">pH</label>
+        </div>
+        <div class="download-option-buttons" style="margin-top: 15px; display: flex; gap: 10px;">
+            <button class="btn-primary" id="downloadExcel"><i class="fas fa-file-excel"></i> Excel</button>
+            <button class="btn-primary" id="downloadPDF"><i class="fas fa-file-pdf"></i> PDF</button>
+        </div>
+    </div>
+
+    <div class="status" id="status" style="margin: 10px 0; color: var(--text-muted); font-style: italic;">
+        <span>Esperando selección...</span>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="grafica"></canvas>
+    </div>
+
+    <div class="data-table-container">
+        <div class="table-header" style="display:flex; justify-content:space-between; align-items: center; margin-bottom:15px;">
+            <h4><i class="fas fa-table"></i> Tabla de Datos</h4>
+            <span id="dataCount" style="font-weight:bold; color: var(--primary);">0 registros</span> 
+        </div>
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Fecha y Hora</th>
+                        <th>Temp (°C)</th>
+                        <th>TDS (mg/L)</th>
+                        <th>Oxígeno (mg/L)</th>
+                        <th>pH</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding: 3rem; color: var(--text-muted);">Seleccione un estanque y rango de fechas</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+    window.API_TOKEN = "{{ api_token|escapejs }}";
+</script>
+<script src="{% static 'js/historial.js' %}"></script>
+{% endblock %}

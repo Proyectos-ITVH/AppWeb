@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Informes - Sistema IoT{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin:0;"><i class="fas fa-file-alt"></i> Informes y Estanques</h2>
+    </div>
+
+    <p>Selecciona un rango de fechas para generar reportes o visualiza el estado de los estanques.</p>
+
+    <div class="filter-bar" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 20px; background: var(--bg-light); padding: 15px; border-radius: 8px;">
+        
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+            <label for="fechaInicio">Fecha Inicio:</label>
+            <input type="date" id="fechaInicio" class="form-control">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+            <label for="fechaFin">Fecha Fin:</label>
+            <input type="date" id="fechaFin" class="form-control">
+        </div>
+
+        <button id="btnFiltrar" class="btn btn-primary" style="margin-bottom: 0;">
+            <i class="fas fa-search"></i> Filtrar
+        </button>
+        
+        <button id="btnLimpiar" class="btn btn-secondary" style="margin-bottom: 0;">
+            <i class="fas fa-eraser"></i> Limpiar
+        </button>
+    </div>
+
+    <div id="downloadOptionsContainer" style="display: none; gap: 10px; margin-bottom: 20px;">
+        <button id="btnDescargarPDF" class="btn btn-danger">
+            <i class="fas fa-file-pdf"></i> Descargar PDF
+        </button>
+        <button id="btnDescargarExcel" class="btn btn-success">
+            <i class="fas fa-file-excel"></i> Descargar Excel
+        </button>
+    </div>
+
+    <div id="lista-estanques" class="dashboard-grid">
+        <p style="grid-column: 1 / -1; text-align: center; padding: 2rem;">Cargando estanques...</p>
+    </div>
+
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    // Token necesario para que informes.js llame a la API
+    window.API_TOKEN = "{{ api_token|escapejs }}";
+    
+    // Si necesitas saber el rol para ocultar botones en el JS
+    window.USER_ROLE = "{{ user_role|default:'user'|escapejs }}"; 
+  </script>
+
+  <script src="{% static 'js/informes.js' %}"></script>
+{% endblock %}

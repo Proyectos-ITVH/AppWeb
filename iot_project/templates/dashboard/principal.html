@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Sistema IoT{% endblock %}
+
+{% block content %}
+  <div class="card" id="dashboard-container" data-api-url="{% url 'api_datos' %}">
+    
+    <h1>Panel de Control</h1>
+    <p>Monitoreo en tiempo real de la calidad del agua.</p>
+
+    <div class="dashboard-grid">
+      
+      <div class="dashboard-card">
+        <div class="dashboard-icon"><i class="fas fa-temperature-high"></i></div>
+        <div class="dashboard-value {{ temp_status|default:'' }}" id="temp-actual">
+          {{ temperatura|default:"--" }} °C
+        </div>
+        <div class="dashboard-label">Temperatura</div>
+      </div>
+
+      <div class="dashboard-card">
+        <div class="dashboard-icon"><i class="fas fa-vial"></i></div>
+        <div class="dashboard-value {{ ph_status|default:'' }}" id="ph-actual">
+          {{ ph|default:"--" }}
+        </div>
+        <div class="dashboard-label">pH</div>
+      </div>
+
+      <div class="dashboard-card">
+        <div class="dashboard-icon"><i class="fas fa-tint"></i></div>
+        <div class="dashboard-value {{ tds_status|default:'' }}" id="tds-actual">
+          {{ solidos_disueltos|default:"--" }} TDS
+        </div>
+        <div class="dashboard-label">Sólidos Disueltos</div>
+      </div>
+
+      <div class="dashboard-card">
+        <div class="dashboard-icon"><i class="fas fa-wind"></i></div>
+        <div class="dashboard-value {{ oxigeno_status|default:'' }}" id="oxigeno-actual">
+          {{ oxigeno|default:"--" }} mg/L
+        </div>
+        <div class="dashboard-label">Oxígeno Disuelto</div>
+      </div>
+
+    </div>
+
+    <div class="last-check">
+        <i class="fas fa-clock"></i> Última actualización: 
+        <span id="last-update">
+            {% if timestamp %}
+                {{ timestamp|date:"d/m/Y, h:i:s A" }}
+            {% else %}
+                --
+            {% endif %}
+        </span>
+    </div>
+  </div>
+
+  <div class="alert-overlay {% if show_alert %}active{% endif %}" id="alertOverlay">
+    <div class="alert-box">
+      <div class="alert-header">
+        <i class="fas fa-exclamation-triangle alert-icon"></i>
+        <h3 class="alert-title">Valores Críticos</h3>
+      </div>
+      <div class="alert-message">Valores fuera de rango detectados.</div>
+      
+      <div class="alert-parameters">
+        {% for problem in problems %}
+            <div class="parameter-item">
+                <span>{{ problem.name }}:</span>
+                <strong>{{ problem.value }}</strong>
+            </div>
+        {% endfor %}
+      </div>
+
+      <div class="alert-buttons">
+        <button class="btn btn-primary" id="alertDismissBtn">Entendido</button>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}
