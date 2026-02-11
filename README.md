@@ -4,7 +4,7 @@
 
 ---
 
-## 🚀 Características Principales
+##  Características Principales
 
 * **Panel de Control (Dashboard)**: Interfaz dinámica con tarjetas informativas que muestran datos actualizados de los sensores.
 * **Monitoreo de Parámetros Críticos**: Seguimiento constante de temperatura, pH, oxígeno disuelto y sólidos disueltos (TDS).
