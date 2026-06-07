@@ -360,3 +360,77 @@ def perfil_view(request):
         'api_token': token
     }
     return render(request, 'dashboard/perfil.html', context)
+
+#Funcionalidad para recuperar contraseña (Cambio realizado por Andy Alcázar)
+
+import requests
+from django.shortcuts import render
+from dashboard.config.firebase_config import FIREBASE_API_KEY
+
+
+
+def reset_password_view(request):
+
+    if request.method == "POST":
+
+        email = request.POST.get("email", "").strip()
+
+        if not email:
+            return render(
+                request,
+                "dashboard/reset_password.html",
+                {
+                    "error": "Por favor ingrese su correo electrónico"
+                }
+            )
+
+        try:
+
+            response = requests.post(
+    f"https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key={FIREBASE_API_KEY}",
+    json={
+        "requestType": "PASSWORD_RESET",
+        "email": email
+    }
+)
+
+            if response.status_code == 200:
+
+                return render(
+                    request,
+                    "dashboard/reset_password.html",
+                    {
+                        "success": "El correo se envió correctamente."
+                    }
+                )
+
+            error_data = response.json()
+
+            return render(
+                request,
+                "dashboard/reset_password.html",
+                {
+                    "error": error_data.get(
+                        "error",
+                        {}
+                    ).get(
+                        "message",
+                        "No fue posible enviar el correo."
+                    )
+                }
+            )
+
+        except Exception as e:
+
+            return render(
+                request,
+                "dashboard/reset_password.html",
+                {
+                    "error": str(e)
+                }
+            )
+
+    return render(
+        request,
+        "dashboard/reset_password.html"
+    )

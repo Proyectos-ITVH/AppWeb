@@ -17,4 +17,7 @@ urlpatterns = [
 
    
     path('api/datos-dashboard/', views.obtener_datos_json, name='api_datos'),
+
+    #Ruta para cambio de contraseña
+    path('reset-password/', views.reset_password_view, name='reset_password'),
 ]
