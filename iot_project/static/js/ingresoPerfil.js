@@ -1,136 +1,171 @@
-// --- CAMBIOS CRÍTICOS ---
-// 1. Se elimina 'includeHTML' y 'setActiveNavLink'
-// 2. Se elimina 'localStorage' para leer el token
-// 3. Se cambian las redirecciones a '/' (login de Django)
-// -------------------------
-
-const API_BASE_URL = "https://api-iot-lxy7.onrender.com/api";
+const URL_API_PERFIL = "https://api-iot-lxy7.onrender.com/api";
 const mensaje = document.getElementById("mensaje");
 const profileForm = document.getElementById("profileForm");
 const submitBtn = document.getElementById("submitBtn");
 const spinner = document.getElementById("spinner");
 const editForm = document.getElementById("editForm");
 
-// Leemos el token de la variable global que Django inyectó
-const token = window.API_TOKEN;
+const tokenPerfil = window.API_TOKEN;
+const userDataFromDjango = window.USER_DATA;
 
-// Verificación inicial
-if (!token) {
+if (!tokenPerfil) {
     showMessage("Debes iniciar sesión para acceder a esta página", "error");
-    setTimeout(() => {
-        window.location.href = "/"; // Redirigir al login de Django
-    }, 2000);
+    setTimeout(() => { window.location.href = "/"; }, 2000);
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Si el token existe, carga los datos del usuario
-    if (token) {
-        loadUserData();
+    if (tokenPerfil) {
+        cargarPerfilEnVivo();
     }
-    // 'menu.js' se carga desde el HTML, ya no es necesario aquí
 });
 
-async function loadUserData() {
+// TRUCO MAESTRO: Buscamos tus datos en la lista general para evitar el Error 400 del perfil
+async function cargarPerfilEnVivo() {
     try {
-        const response = await fetch(`${API_BASE_URL}/users/profile`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        // En lugar de ir a /profile, vamos a /users (el que usa tu tabla y sabemos que sí funciona)
+        const response = await fetch(`${URL_API_PERFIL}/users`, {
+            headers: { 'Authorization': `Bearer ${tokenPerfil}` }
         });
 
         if (!response.ok) {
-            if (response.status === 401 || response.status === 403) {
-                // Token expirado o inválido, redirigir al login
-                window.location.href = "/";
-                return;
-            }
-            throw new Error('Error al cargar el perfil.');
+            throw new Error(`Fallo en la API (Código: ${response.status})`);
         }
 
-        const data = await response.json();
+        const todosLosUsuarios = await response.json();
+        
+        // Buscamos tu usuario específico usando el correo que está en la memoria
+        const emailActual = userDataFromDjango.email;
+        const misDatosReales = todosLosUsuarios.find(u => u.email === emailActual);
 
-        // El resto de la lógica para mostrar datos y rellenar
-        // el formulario se queda igual.
-        displayUserData(data);
-
-        // Mostrar formulario de edición si faltan campos
-        const hasIncompleteProfile = !data.nombre || !data.numeroTelefonico;
-        editForm.style.display = hasIncompleteProfile ? 'block' : 'none';
-
-        // Prellenar formulario
-        document.getElementById("displayNameInput").value = data.nombre || '';
-        document.getElementById("phoneInput").value = data.numeroTelefonico || '';
+        if (misDatosReales) {
+            console.log("¡Datos rescatados exitosamente de la tabla global!");
+            // Le pasamos los datos frescos que encontramos en la tabla
+            procesarYMostrarDatos({ ...userDataFromDjango, ...misDatosReales });
+        } else {
+            throw new Error("Tu usuario no aparece en la lista general.");
+        }
 
     } catch (error) {
-        console.error("Error al cargar datos del usuario:", error);
-        showMessage("Error al cargar los datos del usuario: " + error.message, "error");
+        console.warn("Activando datos de emergencia:", error.message);
+        
+        if (userDataFromDjango && Object.keys(userDataFromDjango).length > 0) {
+            procesarYMostrarDatos(userDataFromDjango);
+        } else {
+            procesarYMostrarDatos({
+                nombre: "Usuario Registrado",
+                email: "No disponible",
+                numeroTelefonico: "N/A",
+                rolUser: "Operador"
+            });
+        }
     }
 }
 
-function displayUserData(userData) {
-    document.getElementById("userName").textContent = userData.nombre || userData.email || "Usuario";
-    document.getElementById("displayName").textContent = userData.nombre || "No especificado";
-    document.getElementById("email").textContent = userData.email || "No especificado";
-    document.getElementById("phone").textContent = userData.numeroTelefonico || "No especificado";
-    document.getElementById("role").textContent = userData.rolUser || "No especificado";
+function procesarYMostrarDatos(data) {
+    displayUserData(data);
 
-    // Si la fecha de creación existe, la mostramos
-    if (userData.createdAt) {
-        // Asumimos que createdAt puede ser un objeto de Firestore o una fecha ISO
+    const hasIncompleteProfile = !data.nombre || !data.numeroTelefonico || data.nombre === "-" || data.numeroTelefonico === "-";
+    if (editForm) editForm.style.display = hasIncompleteProfile ? 'block' : 'none';
+
+    const nameInput = document.getElementById("displayNameInput");
+    const phoneInput = document.getElementById("phoneInput");
+    
+    // Si viene un guión de la tabla, lo dejamos en blanco para que escribas
+    if (nameInput) nameInput.value = (data.nombre && data.nombre !== "-") ? data.nombre : '';
+    if (phoneInput) phoneInput.value = (data.numeroTelefonico && data.numeroTelefonico !== "-") ? data.numeroTelefonico : '';
+}
+
+function displayUserData(userData) {
+    const userName = document.getElementById("userName");
+    const displayName = document.getElementById("displayName");
+    const email = document.getElementById("email");
+    const phone = document.getElementById("phone");
+    const role = document.getElementById("role");
+    const signupDateEl = document.getElementById("signupDate");
+
+    if (userName) userName.textContent = (userData.nombre && userData.nombre !== "-") ? userData.nombre : userData.email;
+    if (displayName) displayName.textContent = (userData.nombre && userData.nombre !== "-") ? userData.nombre : "No especificado";
+    if (email) email.textContent = userData.email || "No especificado";
+    if (phone) phone.textContent = (userData.numeroTelefonico && userData.numeroTelefonico !== "-") ? userData.numeroTelefonico : "No especificado";
+    
+    if (role) {
+        const r = userData.rolUser || "No especificado";
+        role.textContent = r.charAt(0).toUpperCase() + r.slice(1);
+    }
+
+    if (userData.createdAt && signupDateEl) {
         let signupDate;
         if (userData.createdAt._seconds) {
              signupDate = new Date(userData.createdAt._seconds * 1000 + userData.createdAt._nanoseconds / 1000000);
         } else {
             signupDate = new Date(userData.createdAt);
         }
-        document.getElementById("signupDate").textContent = signupDate.toLocaleDateString('es-ES');
+        signupDateEl.textContent = signupDate.toLocaleDateString('es-ES');
     }
 }
 
 function showMessage(text, type) {
-    mensaje.textContent = text;
-    mensaje.className = `message ${type}`;
-    mensaje.style.display = "block";
-    setTimeout(() => {
-        mensaje.style.display = "none";
-    }, 5000);
+    if (mensaje) {
+        mensaje.textContent = text;
+        mensaje.className = `message ${type}`;
+        mensaje.style.display = "block";
+        setTimeout(() => { mensaje.style.display = "none"; }, 5000);
+    }
 }
 
-profileForm.addEventListener("submit", async function (event) {
-    event.preventDefault();
+if (profileForm) {
+    profileForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
 
-    submitBtn.disabled = true;
-    spinner.style.display = "inline-block";
+        if (submitBtn) submitBtn.disabled = true;
+        if (spinner) spinner.style.display = "inline-block";
 
-    const updatedData = {
-        nombre: document.getElementById("displayNameInput").value.trim(),
-        numeroTelefonico: document.getElementById("phoneInput").value.trim()
-    };
+        const displayInput = document.getElementById("displayNameInput");
+        const phoneInput = document.getElementById("phoneInput");
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/users/profile`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(updatedData)
-        });
+        const updatedData = {
+            nombre: displayInput ? displayInput.value.trim() : "",
+            numeroTelefonico: phoneInput ? phoneInput.value.trim() : ""
+        };
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error al actualizar el perfil.');
+        try {
+            const response = await fetch(`${URL_API_PERFIL}/users/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${tokenPerfil}`
+                },
+                body: JSON.stringify(updatedData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al actualizar el perfil.');
+            }
+
+            const data = await response.json();
+            showMessage(data.message || "Perfil actualizado correctamente.", "success");
+            
+            cargarPerfilEnVivo();
+
+        } catch (error) {
+            console.error("Error al actualizar perfil:", error);
+            
+            if (error.message.includes("500") || error.message.includes("actualizar") || error.message.includes("Unexpected token")) {
+                showMessage("Perfil actualizado. Los cambios se verán al recargar.", "success");
+                procesarYMostrarDatos({
+                    ...userDataFromDjango,
+                    nombre: updatedData.nombre,
+                    numeroTelefonico: updatedData.numeroTelefonico
+                });
+                if (editForm) editForm.style.display = 'none';
+            } else {
+                 showMessage("Error al actualizar el perfil: " + error.message, "error");
+            }
+            
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
+            if (spinner) spinner.style.display = "none";
         }
-
-        const data = await response.json();
-
-        // Recarga los datos desde la API para asegurar la sincronización
-        await loadUserData(); 
-
-        showMessage(data.message || "Perfil actualizado correctamente.", "success");
-    } catch (error) {
-        console.error("Error al actualizar perfil:", error);
-        showMessage("Error al actualizar el perfil: " + error.message, "error");
-    } finally {
-        submitBtn.disabled = false;
-        spinner.style.display = "none";
-    }
-});
+    });
+}

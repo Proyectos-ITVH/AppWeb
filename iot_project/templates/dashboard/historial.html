@@ -5,7 +5,6 @@
 
 {% block extra_css %}
 <style>
-    /* Estilos específicos de Historial */
     .historial-controls {
         display: flex;
         flex-wrap: wrap;
@@ -22,86 +21,65 @@
         height: 400px;
         width: 100%;
         margin-bottom: 2rem;
+        background: var(--bg-card);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
     }
-    #downloadOptionsContainer {
-        display: none;
-        background: #f8f9fa;
-        padding: 1.5rem;
-        border-radius: var(--border-radius);
-        border: 2px dashed var(--border-color);
-        margin-bottom: 1.5rem;
-    }
-    .param-checkbox { display: inline-block; margin-right: 15px; font-weight: 600; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="card">
-    <div class="historial-header">
-        <h3><i class="fas fa-history"></i> Historial de Datos</h3>
-        <p class="subtitle">Datos de calidad del agua a lo largo del tiempo</p>
+    <div class="historial-header" style="margin-bottom: 1.5rem;">
+        <h3 style="margin: 0;"><i class="fas fa-database"></i> Bitácora de Datos Crudos</h3>
+        <p class="subtitle" style="color: var(--text-muted); margin-top: 5px;">Monitor continuo y exportación de registros detallados.</p>
     </div>
 
     <div class="historial-controls">
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom: 0;">
             <label for="tankSelect">Estanque:</label>
-            <select id="tankSelect" style="width: 180px;">
+            <select id="tankSelect" class="form-control" style="width: 180px;">
                 <option value="">Cargando...</option>
             </select>
         </div>
         
-        <div class="form-group">
-            <label for="dataLimit">Límite:</label>
-            <select id="dataLimit">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="dataLimit">Últimos registros:</label>
+            <select id="dataLimit" class="form-control" style="width: 100px;">
                 <option value="50">50</option>
-                <option value="100">100</option>
-                <option value="200">200</option>
+                <option value="100" selected>100</option>
                 <option value="500">500</option>
+                <option value="1000">1000</option>
             </select>
         </div>
         
-        <div class="form-group">
-            <label for="startDate">Desde:</label>
-            <input type="date" id="startDate">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="startDate">Desde (Opcional):</label>
+            <input type="date" id="startDate" class="form-control">
         </div>
         
-        <div class="form-group">
-            <label for="endDate">Hasta:</label>
-            <input type="date" id="endDate">
+        <div class="form-group" style="margin-bottom: 0;">
+            <label for="endDate">Hasta (Opcional):</label>
+            <input type="date" id="endDate" class="form-control">
         </div>
         
-        <button class="btn-primary" id="applyDateRange" style="height: 45px;">
-            <i class="fas fa-check"></i> Aplicar
+        <button class="btn-primary" id="applyDateRange" style="height: 40px; margin-bottom: 0;">
+            <i class="fas fa-search"></i> Consultar
         </button>
         
-        <button class="btn-secondary" id="downloadOptionsBtn" style="margin-left: auto; height: 45px;">
-            <i class="fas fa-download"></i> Descargar
+        <button class="btn-success" id="downloadExcel" style="margin-left: auto; height: 40px; margin-bottom: 0; display: none;">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
         </button>
-    </div>
-    
-    <div id="downloadOptionsContainer">
-        <div style="width: 100%; margin-bottom: 10px;">
-            <strong>Seleccionar parámetros a exportar:</strong>
-        </div>
-        <div class="param-checkbox">
-            <input type="checkbox" id="paramTemperatura" checked> <label for="paramTemperatura">Temperatura</label>
-        </div>
-        <div class="param-checkbox">
-            <input type="checkbox" id="paramTDS" checked> <label for="paramTDS">TDS</label>
-        </div>
-        <div class="param-checkbox">
-            <input type="checkbox" id="paramOxigeno" checked> <label for="paramOxigeno">Oxígeno</label>
-        </div>
-        <div class="param-checkbox">
-            <input type="checkbox" id="paramPH" checked> <label for="paramPH">pH</label>
-        </div>
-        <div class="download-option-buttons" style="margin-top: 15px; display: flex; gap: 10px;">
-            <button class="btn-primary" id="downloadExcel"><i class="fas fa-file-excel"></i> Excel</button>
-            <button class="btn-primary" id="downloadPDF"><i class="fas fa-file-pdf"></i> PDF</button>
-        </div>
+        <button class="btn-success" id="downloadExcel" style="margin-left: auto; height: 40px; margin-bottom: 0; display: none;">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
+        </button>
+        <button class="btn-danger" id="downloadPDF" style="margin-left: 10px; height: 40px; margin-bottom: 0; display: none;">
+            <i class="fas fa-file-pdf"></i> Exportar a PDF
+        </button>
     </div>
 
-    <div class="status" id="status" style="margin: 10px 0; color: var(--text-muted); font-style: italic;">
+    <div class="status" id="status" style="margin-bottom: 15px; color: var(--text-muted); font-style: italic;">
         <span>Esperando selección...</span>
     </div>
 
@@ -109,25 +87,24 @@
         <canvas id="grafica"></canvas>
     </div>
 
-    <div class="data-table-container">
-        <div class="table-header" style="display:flex; justify-content:space-between; align-items: center; margin-bottom:15px;">
-            <h4><i class="fas fa-table"></i> Tabla de Datos</h4>
-            <span id="dataCount" style="font-weight:bold; color: var(--primary);">0 registros</span> 
+    <div class="data-table-container" style="background: var(--bg-card); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">        <div class="table-header" style="display:flex; justify-content:space-between; align-items: center; margin-bottom:15px;">
+            <h4 style="margin: 0;"><i class="fas fa-table"></i> Registros Detallados</h4>
+            <span id="dataCount" style="font-weight:bold; color: var(--primary-color);">0 registros</span> 
         </div>
-        <div class="table-container">
-            <table id="dataTable">
-                <thead>
+        <div class="table-container" style="overflow-x: auto; max-height: 500px; overflow-y: auto;">
+            <table id="dataTable" style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead style="background: var(--bg-light); position: sticky; top: 0;">
                     <tr>
-                        <th>Fecha y Hora</th>
-                        <th>Temp (°C)</th>
-                        <th>TDS (mg/L)</th>
-                        <th>Oxígeno (mg/L)</th>
-                        <th>pH</th>
+                        <th style="padding: 10px; border-bottom: 2px solid var(--border-color);">Fecha y Hora</th>
+                        <th style="padding: 10px; border-bottom: 2px solid var(--border-color);">Temp (°C)</th>
+                        <th style="padding: 10px; border-bottom: 2px solid var(--border-color);">pH</th>
+                        <th style="padding: 10px; border-bottom: 2px solid var(--border-color);">TDS (ppm)</th>
+                        <th style="padding: 10px; border-bottom: 2px solid var(--border-color);">Oxígeno (mg/L)</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="dataTableBody">
                     <tr>
-                        <td colspan="5" style="text-align:center; padding: 3rem; color: var(--text-muted);">Seleccione un estanque y rango de fechas</td>
+                        <td colspan="5" style="text-align:center; padding: 3rem; color: var(--text-muted);">Seleccione un estanque y haga clic en Consultar</td>
                     </tr>
                 </tbody>
             </table>
@@ -139,9 +116,12 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <script>
     window.API_TOKEN = "{{ api_token|escapejs }}";

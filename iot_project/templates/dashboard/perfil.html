@@ -5,72 +5,65 @@
 
 {% block content %}
 <div class="profile-container">
-    <div class="card profile-card">
-        
-        <div class="profile-header">
-            <div class="profile-avatar" id="avatarContainer" title="Clic para cambiar foto">
-                <span id="avatarPlaceholder">👤</span>
-                <img id="avatarImage" style="display: none;" alt="Avatar del usuario">
-                <input type="file" id="avatarUpload" accept="image/*" style="display: none;">
-            </div>
-            <h2 id="userName" style="margin-bottom: 0.5rem;">Cargando...</h2>
-            <p style="color: var(--text-muted); margin: 0;">Perfil de Usuario</p>
+    
+    <!-- Encabezado del Perfil (Avatar y Nombre) -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <i class="fas fa-user"></i>
         </div>
-
-        <div id="mensaje" class="message" style="display: none; padding: 10px; margin-bottom: 15px; border-radius: 5px; text-align: center;"></div>
-
-        <div class="profile-info">
-            <div class="info-group">
-                <span class="info-label">Rol</span>
-                <div class="info-value" id="role">No especificado</div>
-            </div>
-            <div class="info-group">
-                <span class="info-label">Nombre completo</span>
-                <div class="info-value" id="displayName">No especificado</div>
-            </div>
-            <div class="info-group">
-                <span class="info-label">Correo electrónico</span>
-                <div class="info-value" id="email">No especificado</div>
-            </div>
-            <div class="info-group">
-                <span class="info-label">Teléfono</span>
-                <div class="info-value" id="phone">No especificado</div>
-            </div>
-            <div class="info-group">
-                <span class="info-label">Fecha de registro</span>
-                <div class="info-value" id="signupDate">No especificado</div>
-            </div>
-        </div>
-
-        <div class="edit-form" id="editForm" style="display: none; margin-top: 2rem; padding-top: 1rem; border-top: 2px dashed var(--border-color);">
-            <h3><i class="fas fa-user-edit"></i> Actualizar información</h3>
-            <p>Completa los campos para actualizar tu perfil.</p>
-
-            <form id="profileForm">
-                <div class="form-group">
-                    <label for="displayNameInput">Nombre completo *</label>
-                    <input type="text" id="displayNameInput" placeholder="Ingresa tu nombre completo" required>
-                </div>
-                <div class="form-group">
-                    <label for="phoneInput">Teléfono</label>
-                    <input type="tel" id="phoneInput" placeholder="Ingresa tu número de teléfono">
-                </div>
-                <button type="submit" class="btn-primary" id="submitBtn" style="width: 100%;">
-                    <span>Actualizar perfil</span>
-                    <span class="spinner" id="spinner" style="display:none; margin-left: 10px;">
-                        <i class="fas fa-circle-notch fa-spin"></i>
-                    </span>
-                </button>
-            </form>
-        </div>
-        
+        <h2 id="userName">Cargando...</h2>
+        <p>Perfil de Usuario</p>
     </div>
+
+    <!-- Información del Usuario -->
+    <div class="profile-info">
+        <div class="info-group">
+            <span class="info-label">Rol</span>
+            <span class="info-value" id="role">--</span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Nombre completo</span>
+            <span class="info-value" id="displayName">--</span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Correo electrónico</span>
+            <span class="info-value" id="email">--</span>
+        </div>
+        <div class="info-group">
+            <span class="info-label">Teléfono</span>
+            <span class="info-value" id="phone">--</span>
+        </div>
+    </div>
+
+    <!-- Formulario para completar datos (Se oculta automáticamente si ya están llenos) -->
+    <div id="editForm" style="display: none; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color);">
+        <h4 style="margin-bottom: 1rem; color: var(--text-dark); text-align: center;">Completar Perfil</h4>
+        <form id="profileForm">
+            <div class="form-group">
+                <label for="displayNameInput">Nombre Completo</label>
+                <input type="text" id="displayNameInput" class="form-control" placeholder="Escribe tu nombre">
+            </div>
+            <div class="form-group">
+                <label for="phoneInput">Teléfono</label>
+                <input type="text" id="phoneInput" class="form-control" placeholder="Tu número">
+            </div>
+            <button type="submit" id="submitBtn" class="btn-primary" style="width: 100%; margin-top: 10px;">
+                <i class="fas fa-save"></i> Guardar Datos
+                <div class="spinner" id="spinner"></div>
+            </button>
+        </form>
+    </div>
+
+    <!-- Espacio para mensajes de éxito o error -->
+    <div id="mensaje" style="display: none; margin-top: 1rem; padding: 10px; border-radius: 6px; text-align: center;"></div>
+
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
     window.API_TOKEN = "{{ api_token|escapejs }}";
+    window.USER_DATA = {{ user_json|safe }};
 </script>
-<script src="{% static 'js/ingresoPerfil.js' %}"></script>
+<script src="{% static 'js/ajustes.js' %}"></script> <script src="{% static 'js/ingresoPerfil.js' %}"></script>
+    
 {% endblock %}

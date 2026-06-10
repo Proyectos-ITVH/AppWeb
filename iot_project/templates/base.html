@@ -14,6 +14,20 @@
     {% block extra_meta %}{% endblock %}
 </head>
 <body>
+    <script>
+        (function() {
+            try {
+                const prefGuardadas = JSON.parse(localStorage.getItem('preferenciasIoT'));
+                if (prefGuardadas && prefGuardadas.tema === 'oscuro') {
+                    document.body.classList.add('dark-mode');
+                } else if (prefGuardadas && prefGuardadas.tema === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.body.classList.add('dark-mode');
+                }
+            } catch (error) {
+                console.error("Error al cargar el tema visual", error);
+            }
+        })();
+    </script>
 
     <div class="mobile-header">
         <button class="mobile-toggler" id="mobileMenuBtn">

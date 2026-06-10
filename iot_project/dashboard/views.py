@@ -1,13 +1,13 @@
 # dashboard/views.py
-import requests # <--- IMPORTANTE: Asegúrate de tener esto importado
+import requests 
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from datetime import datetime
+import json
 
-# La URL base de tu API externa
 API_BASE_URL = 'https://api-iot-lxy7.onrender.com/api'
 
-# --- Funciones de Lógica ---
+
 
 def get_value_status(value, type):
     """ Determina el estado (color) de un valor """
@@ -342,22 +342,26 @@ def ajustes_view(request):
     token = request.session.get('api_token')
     if not token: return redirect('login')
 
-    # SEGURIDAD: Solo admin
     user_data = request.session.get('user', {})
     if user_data.get('rolUser') != 'admin':
         return redirect('dashboard')
 
-    context = {'api_token': token}
+    context = {
+        'api_token': token,
+        'user_json': json.dumps(user_data) # <-- La línea mágica
+    }
     return render(request, 'dashboard/ajustes.html', context)
     
 def perfil_view(request):
-    """ Muestra la página de perfil del usuario. """
     token = request.session.get('api_token')
     if not token:
         return redirect('login')
         
+    user_data = request.session.get('user', {})    
+        
     context = {
-        'api_token': token
+        'api_token': token,
+        'user_json': json.dumps(user_data) # <-- La línea mágica
     }
     return render(request, 'dashboard/perfil.html', context)
 

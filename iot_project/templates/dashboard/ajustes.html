@@ -41,87 +41,102 @@
                     <th>Acción</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="tablaSensoresBody">
                 <tr>
-                    <td><strong>Sensor pH Estanque 1</strong></td>
-                    <td><span class="badge" style="background-color: #e3f2fd; color: #0d47a1; padding: 2px 6px; border-radius: 4px;">pH</span></td>
-                    <td>6.5</td>
-                    <td>8.5</td>
-                    <td>
-                        <a href="#seccionEditarSensor" class="btn-primary" style="padding: 4px 8px; font-size: 0.8rem; text-decoration: none; border-radius: 4px;">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>Termocupla Agua 1</strong></td>
-                    <td><span class="badge" style="background-color: #ffebee; color: #b71c1c; padding: 2px 6px; border-radius: 4px;">Temperatura</span></td>
-                    <td>24.0 °C</td>
-                    <td>30.0 °C</td>
-                    <td>
-                        <a href="#seccionEditarSensor" class="btn-primary" style="padding: 4px 8px; font-size: 0.8rem; text-decoration: none; border-radius: 4px;">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <td><strong>Sensor Oxígeno 1</strong></td>
-                    <td><span class="badge" style="background-color: #e8f5e9; color: #1b5e20; padding: 2px 6px; border-radius: 4px;">Oxígeno</span></td>
-                    <td>5.0 mg/L</td>
-                    <td>9.0 mg/L</td>
-                    <td>
-                        <a href="#seccionEditarSensor" class="btn-primary" style="padding: 4px 8px; font-size: 0.8rem; text-decoration: none; border-radius: 4px;">
-                            <i class="fas fa-edit"></i> Editar
-                        </a>
-                    </td>
+                    <td colspan="5" style="text-align: center; padding: 1rem;">Selecciona un estanque para cargar sus sensores...</td>
                 </tr>
             </tbody>
         </table>
         
         <div class="form-actions" style="justify-content: flex-start;">
-            <button type="button" class="btn-primary" style="background-color: #2b7a78; border-color: #2b7a78;">
+            <button type="button" id="btnMostrarFormNuevo" class="btn-primary" style="background-color: #2b7a78; border-color: #2b7a78;">
                 <i class="fas fa-plus"></i> Agregar Nuevo Sensor
             </button>
         </div>
     </div>
 </div>
 
-<div class="card" id="seccionEditarSensor">
+<div class="card" id="seccionEditarSensor" style="display: none;">
     <div class="ajustes-seccion">
         <h3><i class="fas fa-edit"></i> Modificar Parámetros del Sensor</h3>
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-            Ajusta los umbrales específicos de alerta para el sensor seleccionado. Esta configuración interactuará directamente con la API.
+            Ajusta los umbrales de alerta. Los cambios se guardarán directamente en la base de datos de la API.
         </p>
         
-        <form class="form-ajustes" id="formEdicionSensor" onsubmit="event.preventDefault(); alert('Maqueta visual validada. Los parámetros se enviarán a la API en la siguiente fase de desarrollo.');">
+        <form class="form-ajustes" id="formEdicionSensor">
+            <input type="hidden" id="editSensorId"> 
+
             <div class="form-group">
                 <label for="editNombreSensor">Nombre del Dispositivo</label>
-                <input type="text" id="editNombreSensor" value="Sensor pH Estanque 1">
+                <input type="text" id="editNombreSensor" required>
             </div>
             
             <div class="form-group">
                 <label for="editTipoSensor">Tipo de Variable</label>
-                <select id="editTipoSensor" disabled>
+                <select id="editTipoSensor" required>
                     <option value="PH">Potencial de Hidrógeno (pH)</option>
                     <option value="TEMP">Temperatura (°C)</option>
                     <option value="OX">Oxígeno Disuelto (mg/L)</option>
+                    <option value="TDS">Sólidos Disueltos (TDS)</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="editRangoMin">Rango Mínimo Permitido (Alerta por debajo)</label>
-                <input type="number" id="editRangoMin" value="6.5" step="0.1">
+                <label for="editRangoMin">Rango Mínimo Permitido</label>
+                <input type="number" id="editRangoMin" step="0.1" required>
             </div>
 
             <div class="form-group">
-                <label for="editRangoMax">Rango Máximo Permitido (Alerta por encima)</label>
-                <input type="number" id="editRangoMax" value="8.5" step="0.1">
+                <label for="editRangoMax">Rango Máximo Permitido</label>
+                <input type="number" id="editRangoMax" step="0.1" required>
             </div>
 
             <div class="form-actions">
                 <button type="submit" class="btn-primary btn-guardar" style="background-color: #2b7a78;">
                     <i class="fas fa-sync-alt"></i> Actualizar en API
                 </button>
+                <button type="button" class="btn-cancelar" onclick="document.getElementById('seccionEditarSensor').style.display='none'">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card" id="seccionNuevoSensor" style="display: none;">
+    <div class="ajustes-seccion">
+        <h3><i class="fas fa-plus-circle"></i> Registrar Nuevo Sensor</h3>
+        
+        <form class="form-ajustes" id="formNuevoSensor">
+            <div class="form-group">
+                <label for="nuevoNombreSensor">Nombre del Dispositivo</label>
+                <input type="text" id="nuevoNombreSensor" placeholder="Ej. Sensor Oxígeno 2" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="nuevoTipoSensor">Tipo de Variable</label>
+                <select id="nuevoTipoSensor" required>
+                    <option value="">Seleccione el tipo...</option>
+                    <option value="PH">Potencial de Hidrógeno (pH)</option>
+                    <option value="TEMP">Temperatura (°C)</option>
+                    <option value="OX">Oxígeno Disuelto (mg/L)</option>
+                    <option value="TDS">Sólidos Disueltos (TDS)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="nuevoRangoMin">Rango Mínimo de Alerta</label>
+                <input type="number" id="nuevoRangoMin" step="0.1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="nuevoRangoMax">Rango Máximo de Alerta</label>
+                <input type="number" id="nuevoRangoMax" step="0.1" required>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary btn-guardar" style="background-color: #2b7a78;">
+                    <i class="fas fa-save"></i> Guardar en API
+                </button>
+                <button type="button" class="btn-cancelar" onclick="document.getElementById('seccionNuevoSensor').style.display='none'">Cancelar</button>
             </div>
         </form>
     </div>
