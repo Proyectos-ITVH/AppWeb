@@ -15,11 +15,17 @@
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Selecciona un estanque para
             configurar sus límites de alerta en el servidor local.</p>
 
-        <div class="form-group" style="max-width: 400px;">
+        <div class="form-group" style="max-width: 500px;">
             <label style="font-weight: bold; color: var(--text-color);">Estanque Activo:</label>
-            <select id="selectEstanqueAjustes" class="form-control"
-                style="width: 100%; padding: 10px; border-radius: 6px; background: var(--bg-light); color: var(--text-color); border: 1px solid var(--border-color);">
-            </select>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <select id="selectEstanqueAjustes" class="form-control"
+                    style="width: 300px; padding: 10px; border-radius: 6px; background: var(--bg-light); color: var(--text-color); border: 1px solid var(--border-color);">
+                </select>
+                <button type="button" id="btnRenombrarEstanque" class="btn-primary"
+                    style="padding: 10px 14px; background-color: #2b7a78; color: white; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap;">
+                    <i class="fas fa-edit"></i> Renombrar
+                </button>
+            </div>
         </div>
 
         <div style="overflow-x: auto;">
@@ -48,13 +54,15 @@
     </div>
 </div>
 
+<!-- MODAL NUEVO SENSOR -->
 <div id="modalNuevoSensor"
     style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1050; justify-content: center; align-items: center; backdrop-filter: blur(3px);">
     <div
         style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 2rem; border-radius: 8px; width: 90%; max-width: 450px; box-shadow: 0 5px 25px rgba(0,0,0,0.3);">
         <h3
             style="margin-top: 0; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-            <i class="fas fa-plus-circle"></i> Registrar Nuevo Sensor</h3>
+            <i class="fas fa-plus-circle"></i> Registrar Nuevo Sensor
+        </h3>
 
         <form id="formNuevoSensor">
             <div class="form-group" style="margin-top: 1.5rem;">
@@ -123,6 +131,7 @@
     </div>
 </div>
 
+<!-- MODAL EDITAR RANGOS -->
 <div id="modalRangos"
     style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1050; justify-content: center; align-items: center; backdrop-filter: blur(3px);">
     <div
@@ -133,7 +142,6 @@
 
         <form id="formRangos">
             <input type="hidden" id="editParametro">
-
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem; margin-bottom: 2rem;">
                 <div style="flex: 1;">
                     <label
@@ -150,7 +158,6 @@
                         style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-light); color: var(--text-color); font-size: 1.1rem; text-align: center;">
                 </div>
             </div>
-
             <div style="display: flex; justify-content: flex-end; gap: 15px;">
                 <button type="button" id="btnCerrarModal" class="btn"
                     style="background: var(--bg-light); color: var(--text-color); border: 1px solid var(--border-color); padding: 10px 20px;">Cancelar</button>
@@ -158,6 +165,31 @@
                         class="fas fa-save"></i> Guardar Cambios</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- MODAL RENOMBRAR ESTANQUE -->
+<div id="modalRenombrar"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1050; justify-content: center; align-items: center; backdrop-filter: blur(3px);">
+    <div
+        style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 2rem; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 5px 25px rgba(0,0,0,0.3);">
+        <h3
+            style="margin-top: 0; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            <i class="fas fa-edit"></i> Renombrar Estanque
+        </h3>
+        <div class="form-group" style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
+            <label style="color: var(--text-muted); font-weight: bold; font-size: 0.85rem;">NUEVO NOMBRE</label>
+            <input type="text" id="inputNuevoNombre" placeholder="Escribe el nuevo nombre..."
+                style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-light); color: var(--text-color);">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 15px;">
+            <button type="button" id="btnCerrarRenombrar" class="btn"
+                style="background: var(--bg-light); color: var(--text-color); border: 1px solid var(--border-color); padding: 10px 20px;">Cancelar</button>
+            <button type="button" id="btnGuardarNombre" class="btn-primary"
+                style="padding: 10px 20px; background-color: #2b7a78;">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+        </div>
     </div>
 </div>
 
@@ -170,7 +202,6 @@
 {% block extra_js %}
 <script>
     window.API_TOKEN = "{{ api_token|escapejs }}";
-
     try {
         window.USER_DATA = JSON.parse('{{ user_json|escapejs }}' || '{}');
         window.RANGOS_LOCALES = JSON.parse('{{ estanques_json|escapejs }}' || '[]');

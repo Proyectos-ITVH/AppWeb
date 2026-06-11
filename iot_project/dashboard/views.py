@@ -421,7 +421,27 @@ def ajustes_view(request):
                     config.save()
 
                 return JsonResponse({'status': 'success', 'message': 'Rangos actualizados'})
+            # ACCIÓN C: RENOMBRAR ESTANQUE
+            elif action == 'renombrar_estanque':
+                nuevo_nombre = datos.get('nuevo_nombre')
                 
+                # 1. Mandamos el cambio a la API externa
+                api_response = requests.put(
+                    f'{API_BASE_URL}/tanks/{estanque_id}',
+                    headers={**headers, 'Content-Type': 'application/json'},
+                    json={'nombre': nuevo_nombre},
+                    timeout=10
+                )
+                
+                if api_response.ok:
+                    # 2. Si la API lo aceptó, actualizamos también nuestra BD local
+                    config = ConfiguracionEstanque.objects.get(estanque_id=estanque_id)
+                    config.nombre_estanque = nuevo_nombre
+                    config.save()
+                    return JsonResponse({'status': 'success', 'message': 'Estanque renombrado correctamente'})
+                else:
+                    return JsonResponse({'status': 'error', 'message': 'La API no pudo renombrar el estanque'}, status=400)
+                            
         except Exception as e:
             print(f"Error en ajustes: {e}")
             return JsonResponse({'status': 'error', 'message': 'Hubo un error al procesar'}, status=400)

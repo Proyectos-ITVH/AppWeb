@@ -1,7 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    
-
     // ==========================================
     // 1. CARGAR PREFERENCIAS VISUALES
     // ==========================================
@@ -23,6 +21,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const formNuevo = document.getElementById('formNuevoSensor');
     const btnAbrirNuevo = document.getElementById('btnAbrirModalNuevo');
     const btnCerrarNuevo = document.getElementById('btnCerrarModalNuevo');
+
+    // MODAL RENOMBRAR
+    const modalRenombrar = document.getElementById('modalRenombrar');
+    const btnRenombrar = document.getElementById('btnRenombrarEstanque');
+    const btnCerrarRenombrar = document.getElementById('btnCerrarRenombrar');
+    const btnGuardarNombre = document.getElementById('btnGuardarNombre');
+    const inputNuevoNombre = document.getElementById('inputNuevoNombre');
     
     const parametros = [
         { id: 'temp', nombre: '<i class="fas fa-temperature-high" style="color: #e74c3c; width: 25px;"></i> Temperatura (°C)', minKey: 'temp_min', maxKey: 'temp_max' },
@@ -70,12 +75,10 @@ document.addEventListener('DOMContentLoaded', function() {
             tablaBody.appendChild(tr);
         };
 
-        // Pintamos los fijos
         parametros.forEach(param => {
             crearFila(param.id, param.nombre, estanqueActual.rangos_fijos[param.minKey], estanqueActual.rangos_fijos[param.maxKey]);
         });
 
-        // Pintamos los extra (si existen)
         if (estanqueActual.sensores_extra) {
             estanqueActual.sensores_extra.forEach(sensor => {
                 const nombreHtml = `<i class="fas fa-microchip" style="color: #f39c12; width: 25px;"></i> ${sensor.nombre} (${sensor.tipo})`;
@@ -83,13 +86,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Eventos a los botones de editar
         document.querySelectorAll('.btn-editar').forEach(btn => {
             btn.addEventListener('click', (e) => abrirModalEdicion(e.currentTarget.getAttribute('data-param')));
         });
     }
 
-    // --- FUNCIONES DEL MODAL DE EDICIÓN ---
+    // --- MODAL DE EDICIÓN DE RANGOS ---
     function abrirModalEdicion(paramId) {
         document.getElementById('editParametro').value = paramId;
 
@@ -101,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('inputMax').value = sensor.rango_max;
         } else {
             const paramConfig = parametros.find(p => p.id === paramId);
-            const nombreLimpio = paramConfig.nombre.replace(/<[^>]*>?/gm, ''); 
+            const nombreLimpio = paramConfig.nombre.replace(/<[^>]*>?/gm, '');
             document.getElementById('modalTitulo').textContent = `Ajustar límites: ${nombreLimpio}`;
             document.getElementById('inputMin').value = estanqueActual.rangos_fijos[paramConfig.minKey];
             document.getElementById('inputMax').value = estanqueActual.rangos_fijos[paramConfig.maxKey];
@@ -118,23 +120,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const valMin = parseFloat(document.getElementById('inputMin').value);
             const valMax = parseFloat(document.getElementById('inputMax').value);
 
-            const datos = {
-                action: 'editar_sensor',
-                estanque_id: estanqueActual.id,
-                param_id: paramId,
-                rango_min: valMin,
-                rango_max: valMax
-            };
-
             fetch(window.location.href, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-                body: JSON.stringify(datos)
+                body: JSON.stringify({
+                    action: 'editar_sensor',
+                    estanque_id: estanqueActual.id,
+                    param_id: paramId,
+                    rango_min: valMin,
+                    rango_max: valMax
+                })
             }).then(() => window.location.reload());
         });
     }
 
-    // --- FUNCIONES DEL MODAL DE NUEVO SENSOR ---
+    // --- MODAL NUEVO SENSOR ---
     if (btnAbrirNuevo) btnAbrirNuevo.addEventListener('click', () => modalNuevo.style.display = 'flex');
     if (btnCerrarNuevo) btnCerrarNuevo.addEventListener('click', () => modalNuevo.style.display = 'none');
 
@@ -143,26 +143,82 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const btnSubmit = formNuevo.querySelector('button[type="submit"]');
             if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-            
-            const datos = {
-                action: 'agregar_sensor',
-                estanque_id: estanqueActual.id,
-                nombre: document.getElementById('nuevoNombreSensor').value,
-                tipo: document.getElementById('nuevoTipoSensor').value.toUpperCase(),
-                rango_min: parseFloat(document.getElementById('nuevoRangoMin').value),
-                rango_max: parseFloat(document.getElementById('nuevoRangoMax').value)
-            };
 
             fetch(window.location.href, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
-                body: JSON.stringify(datos)
+                body: JSON.stringify({
+                    action: 'agregar_sensor',
+                    estanque_id: estanqueActual.id,
+                    nombre: document.getElementById('nuevoNombreSensor').value,
+                    tipo: document.getElementById('nuevoTipoSensor').value.toUpperCase(),
+                    rango_min: parseFloat(document.getElementById('nuevoRangoMin').value),
+                    rango_max: parseFloat(document.getElementById('nuevoRangoMax').value)
+                })
             }).then(() => window.location.reload());
         });
     }
 
     // ==========================================
-    // 3. FUNCIONES DE UTILIDAD Y SEGURIDAD
+    // 3. MODAL RENOMBRAR ESTANQUE
+    // ==========================================
+    if (btnRenombrar) {
+        btnRenombrar.addEventListener('click', () => {
+            if (!estanqueActual) return;
+            // Precargamos el nombre actual en el input
+            inputNuevoNombre.value = estanqueActual.nombre;
+            modalRenombrar.style.display = 'flex';
+        });
+    }
+
+    if (btnCerrarRenombrar) {
+        btnCerrarRenombrar.addEventListener('click', () => {
+            modalRenombrar.style.display = 'none';
+        });
+    }
+
+    if (btnGuardarNombre) {
+        btnGuardarNombre.addEventListener('click', () => {
+            const nuevoNombre = inputNuevoNombre.value.trim();
+            if (!nuevoNombre) {
+                mostrarNotificacion('El nombre no puede estar vacío', 'error');
+                return;
+            }
+
+            btnGuardarNombre.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify({
+                    action: 'renombrar_estanque',
+                    estanque_id: estanqueActual.id,
+                    nuevo_nombre: nuevoNombre
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Actualizamos el nombre en el select sin recargar
+                    const optionActual = selectEstanque.querySelector(`option[value="${estanqueActual.id}"]`);
+                    if (optionActual) optionActual.textContent = nuevoNombre;
+                    estanqueActual.nombre = nuevoNombre;
+                    modalRenombrar.style.display = 'none';
+                    mostrarNotificacion('Estanque renombrado correctamente', 'success');
+                } else {
+                    mostrarNotificacion(data.message || 'Error al renombrar', 'error');
+                }
+                btnGuardarNombre.innerHTML = '<i class="fas fa-save"></i> Guardar';
+            })
+            .catch(() => {
+                mostrarNotificacion('Error de conexión', 'error');
+                btnGuardarNombre.innerHTML = '<i class="fas fa-save"></i> Guardar';
+            });
+        });
+    }
+
+    // ==========================================
+    // 4. FUNCIONES DE UTILIDAD
     // ==========================================
     function cargarAjustesLocales() {
         const prefGuardadas = JSON.parse(localStorage.getItem('preferenciasIoT'));
@@ -204,24 +260,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const notificacion = document.getElementById('notificacion');
         const icono = document.getElementById('notificacionIcono');
         const texto = document.getElementById('notificacionMensaje');
-        
         if (!notificacion) return;
-
         texto.textContent = mensaje;
         notificacion.className = `notificacion mostrar ${tipo === 'error' ? 'error' : ''}`;
-        
         if (tipo === 'success') {
             if (icono) icono.className = 'fas fa-check-circle';
         } else {
             if (icono) icono.className = 'fas fa-exclamation-triangle';
         }
-
         setTimeout(() => {
             notificacion.classList.remove('mostrar');
         }, 3000);
     }
 
-    // Herramienta de seguridad de Django
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
