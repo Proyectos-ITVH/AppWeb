@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function cargarEstanquesParaInformes(fechaInicio = null, fechaFin = null) {
-    // ¡AQUÍ ESTÁ LA MAGIA! Buscamos el ID correcto de esta pantalla
+    
     const contenedor = document.getElementById('lista-estanques');
     const downloadOptions = document.getElementById('downloadOptionsContainer');
 
@@ -88,7 +88,7 @@ async function cargarEstanquesParaInformes(fechaInicio = null, fechaFin = null) 
             const timestamp = lecturas.length > 0 ? new Date(lecturas[0].timestamp).toLocaleString('es-ES') : 'Sin registros';
 
             const card = document.createElement('div');
-            card.className = 'card estanque-card'; // Aprovechamos las clases CSS que ya tienes
+            card.className = 'card estanque-card'; 
             card.style.padding = '15px';
             card.style.border = '1px solid var(--border-color)';
             card.style.borderRadius = '8px';
@@ -108,7 +108,7 @@ async function cargarEstanquesParaInformes(fechaInicio = null, fechaFin = null) 
                 <div style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 15px;">
                     <i class="fas fa-clock"></i> Último dato registrado: ${timestamp}
                 </div>
-                // Reemplaza el botón viejo por este:
+                
                 <button class="btn-primary" style="width: 100%;" onclick="window.location.href='/historial/?estanque=${estanque._id}'">
                 <i class="fas fa-list"></i> Ver Historial Completo
                 </button>
@@ -116,7 +116,7 @@ async function cargarEstanquesParaInformes(fechaInicio = null, fechaFin = null) 
             contenedor.appendChild(card);
         }
 
-        // Si el usuario aplicó un filtro, mostramos los botones de descarga de PDF/Excel
+        
         if (fechaInicio && fechaFin && downloadOptions) {
             downloadOptions.style.display = 'flex';
             mostrarNotificacion(`Reportes filtrados del ${fechaInicio} al ${fechaFin}`, "success");
@@ -128,7 +128,7 @@ async function cargarEstanquesParaInformes(fechaInicio = null, fechaFin = null) 
     }
 }
 
-// Función genérica para mostrar notificaciones flotantes
+
 function mostrarNotificacion(mensaje, tipo) {
     const notificacion = document.createElement('div');
     notificacion.className = `notificacion ${tipo}`;

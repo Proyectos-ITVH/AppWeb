@@ -1,4 +1,11 @@
-Django>=4.2.0
-mysqlclient>=2.2.0
-requests>=2.31.0
-django-environ>=0.11.0
+asgiref==3.11.1
+certifi==2026.5.20
+charset-normalizer==3.4.7
+Django==6.0.6
+django-environ==0.13.0
+idna==3.18
+mysqlclient==2.2.8
+requests==2.34.2
+sqlparse==0.5.5
+tzdata==2026.2
+urllib3==2.7.0
