@@ -9,134 +9,82 @@
     <p>Ajusta las preferencias y configuración del sistema de monitoreo IoT.</p>
 </div>
 
-<div class="card">
+<div class="card" style="margin-bottom: 2rem;">
     <div class="ajustes-seccion">
-        <h3><i class="fas fa-water"></i> Control de Estanques</h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-            Selecciona el estanque acuícola que deseas configurar para visualizar sus sensores y rangos.
-        </p>
-        <div class="form-group">
-            <label for="selectEstanque">Estanque Activo</label>
-            <select id="selectEstanque" name="selectEstanque">
-                <option value="1">Estanque Principal - Tilapia Adulta</option>
-                <option value="2">Estanque B - Crías / Alevines</option>
-                <option value="3">Estanque C - Cuarentena</option>
+        <h3><i class="fas fa-sliders-h"></i> Control de Rangos de Seguridad</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Selecciona un estanque para
+            configurar sus límites de alerta en el servidor local.</p>
+
+        <div class="form-group" style="max-width: 400px;">
+            <label style="font-weight: bold; color: var(--text-color);">Estanque Activo:</label>
+            <select id="selectEstanqueAjustes" class="form-control"
+                style="width: 100%; padding: 10px; border-radius: 6px; background: var(--bg-light); color: var(--text-color); border: 1px solid var(--border-color);">
             </select>
         </div>
-    </div>
 
-    <div class="ajustes-seccion">
-        <h3><i class="fas fa-microchip"></i> Sensores Registrados</h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-            Lista de dispositivos vinculados al estanque seleccionado. Haz clic en editar para ajustar sus límites individuales.
-        </p>
-        
-        <table role="grid" style="width: 100%; margin-bottom: 1.5rem; font-size: 0.9rem;">
-            <thead>
-                <tr>
-                    <th>Sensor</th>
-                    <th>Tipo</th>
-                    <th>Rango Mín.</th>
-                    <th>Rango Máx.</th>
-                    <th>Acción</th>
-                </tr>
-            </thead>
-            <tbody id="tablaSensoresBody">
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 1rem;">Selecciona un estanque para cargar sus sensores...</td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <div class="form-actions" style="justify-content: flex-start;">
-            <button type="button" id="btnMostrarFormNuevo" class="btn-primary" style="background-color: #2b7a78; border-color: #2b7a78;">
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; color: var(--text-color);">
+                <thead style="background-color: var(--bg-light); border-bottom: 2px solid var(--border-color);">
+                    <tr>
+                        <th style="padding: 12px; text-align: left;">PARÁMETRO</th>
+                        <th style="padding: 12px; text-align: center;">RANGO MÍNIMO</th>
+                        <th style="padding: 12px; text-align: center;">RANGO MÁXIMO</th>
+                        <th style="padding: 12px; text-align: center;">ACCIÓN</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-rangos-body">
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 1rem;">Cargando configuración...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="form-actions" style="margin-top: 1.5rem; justify-content: flex-start;">
+            <button type="button" id="btnAbrirModalNuevo" class="btn-primary"
+                style="background-color: #2b7a78; border-color: #2b7a78;">
                 <i class="fas fa-plus"></i> Agregar Nuevo Sensor
             </button>
         </div>
     </div>
 </div>
 
-<div class="card" id="seccionEditarSensor" style="display: none;">
-    <div class="ajustes-seccion">
-        <h3><i class="fas fa-edit"></i> Modificar Parámetros del Sensor</h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-            Ajusta los umbrales de alerta. Los cambios se guardarán directamente en la base de datos de la API.
-        </p>
-        
-        <form class="form-ajustes" id="formEdicionSensor">
-            <input type="hidden" id="editSensorId"> 
+<div id="modalNuevoSensor"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1050; justify-content: center; align-items: center; backdrop-filter: blur(3px);">
+    <div
+        style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 2rem; border-radius: 8px; width: 90%; max-width: 450px; box-shadow: 0 5px 25px rgba(0,0,0,0.3);">
+        <h3
+            style="margin-top: 0; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            <i class="fas fa-plus-circle"></i> Registrar Nuevo Sensor</h3>
 
+        <form id="formNuevoSensor">
+            <div class="form-group" style="margin-top: 1.5rem;">
+                <label style="color: var(--text-muted); font-weight: bold; font-size: 0.85rem;">NOMBRE DEL
+                    DISPOSITIVO</label>
+                <input type="text" id="nuevoNombreSensor" placeholder="Ej. Sensor Turbidez 1" required
+                    style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-light); color: var(--text-color);">
+            </div>
             <div class="form-group">
-                <label for="editNombreSensor">Nombre del Dispositivo</label>
-                <input type="text" id="editNombreSensor" required>
+                <label style="color: var(--text-muted); font-weight: bold; font-size: 0.85rem;">TIPO / VARIABLE</label>
+                <input type="text" id="nuevoTipoSensor" placeholder="Ej. TURBIDEZ, NH3" required
+                    style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-light); color: var(--text-color); text-transform: uppercase;">
             </div>
-            
-            <div class="form-group">
-                <label for="editTipoSensor">Tipo de Variable</label>
-                <select id="editTipoSensor" required>
-                    <option value="PH">Potencial de Hidrógeno (pH)</option>
-                    <option value="TEMP">Temperatura (°C)</option>
-                    <option value="OX">Oxígeno Disuelto (mg/L)</option>
-                    <option value="TDS">Sólidos Disueltos (TDS)</option>
-                </select>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="flex: 1;">
+                    <label style="color: var(--text-muted); font-weight: bold; font-size: 0.85rem;">MÍNIMO</label>
+                    <input type="number" step="0.01" id="nuevoRangoMin" required
+                        style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-light); color: var(--text-color);">
+                </div>
+                <div style="flex: 1;">
+                    <label style="color: var(--text-muted); font-weight: bold; font-size: 0.85rem;">MÁXIMO</label>
+                    <input type="number" step="0.01" id="nuevoRangoMax" required
+                        style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-light); color: var(--text-color);">
+                </div>
             </div>
-
-            <div class="form-group">
-                <label for="editRangoMin">Rango Mínimo Permitido</label>
-                <input type="number" id="editRangoMin" step="0.1" required>
-            </div>
-
-            <div class="form-group">
-                <label for="editRangoMax">Rango Máximo Permitido</label>
-                <input type="number" id="editRangoMax" step="0.1" required>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn-primary btn-guardar" style="background-color: #2b7a78;">
-                    <i class="fas fa-sync-alt"></i> Actualizar en API
-                </button>
-                <button type="button" class="btn-cancelar" onclick="document.getElementById('seccionEditarSensor').style.display='none'">Cancelar</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<div class="card" id="seccionNuevoSensor" style="display: none;">
-    <div class="ajustes-seccion">
-        <h3><i class="fas fa-plus-circle"></i> Registrar Nuevo Sensor</h3>
-        
-        <form class="form-ajustes" id="formNuevoSensor">
-            <div class="form-group">
-                <label for="nuevoNombreSensor">Nombre del Dispositivo</label>
-                <input type="text" id="nuevoNombreSensor" placeholder="Ej. Sensor Oxígeno 2" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="nuevoTipoSensor">Tipo de Variable</label>
-                <select id="nuevoTipoSensor" required>
-                    <option value="">Seleccione el tipo...</option>
-                    <option value="PH">Potencial de Hidrógeno (pH)</option>
-                    <option value="TEMP">Temperatura (°C)</option>
-                    <option value="OX">Oxígeno Disuelto (mg/L)</option>
-                    <option value="TDS">Sólidos Disueltos (TDS)</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="nuevoRangoMin">Rango Mínimo de Alerta</label>
-                <input type="number" id="nuevoRangoMin" step="0.1" required>
-            </div>
-
-            <div class="form-group">
-                <label for="nuevoRangoMax">Rango Máximo de Alerta</label>
-                <input type="number" id="nuevoRangoMax" step="0.1" required>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn-primary btn-guardar" style="background-color: #2b7a78;">
-                    <i class="fas fa-save"></i> Guardar en API
-                </button>
-                <button type="button" class="btn-cancelar" onclick="document.getElementById('seccionNuevoSensor').style.display='none'">Cancelar</button>
+            <div style="display: flex; justify-content: flex-end; gap: 15px;">
+                <button type="button" id="btnCerrarModalNuevo" class="btn"
+                    style="background: var(--bg-light); color: var(--text-color); border: 1px solid var(--border-color); padding: 10px 20px;">Cancelar</button>
+                <button type="submit" class="btn-primary" style="padding: 10px 20px; background-color: #2b7a78;"><i
+                        class="fas fa-save"></i> Guardar Sensor</button>
             </div>
         </form>
     </div>
@@ -144,11 +92,12 @@
 
 <div class="card">
     <div class="ajustes-seccion">
-        <h3><i class="fas fa-sliders-h"></i> Preferencias Generales</h3>
+        <h3><i class="fas fa-palette"></i> Preferencias Generales</h3>
         <form class="form-ajustes" id="formPreferencias">
             <div class="form-group">
                 <label for="intervaloActualizacion">Intervalo de actualización (minutos)</label>
-                <input type="number" id="intervaloActualizacion" name="intervaloActualizacion" value="5" min="1" max="60">
+                <input type="number" id="intervaloActualizacion" name="intervaloActualizacion" value="5" min="1"
+                    max="60">
             </div>
             <div class="form-group">
                 <label for="tema">Tema de la interfaz</label>
@@ -159,46 +108,54 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="notificaciones">Notificaciones</label>
+                <label for="notificaciones">Notificaciones de Sonido</label>
                 <select id="notificaciones" name="notificaciones">
                     <option value="activadas">Activadas</option>
                     <option value="desactivadas">Desactivadas</option>
                 </select>
             </div>
-            <div class="form-actions">
-                <button type="submit" class="btn-primary btn-guardar">
+            <div class="form-actions" style="justify-content: flex-start;">
+                <button type="submit" class="btn-primary" style="background-color: #2b7a78;">
                     <i class="fas fa-save"></i> Guardar preferencias
                 </button>
             </div>
         </form>
     </div>
+</div>
 
-    <div class="ajustes-seccion">
-        <h3><i class="fas fa-bell"></i> Alertas y Umbrales Globales</h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-            Define los valores límite por defecto para el sistema general.
-        </p>
-        <form class="form-ajustes" id="formAlertas">
-            <div class="form-group">
-                <label for="umbralTemperatura">Máx. Temperatura (°C)</label>
-                <input type="number" id="umbralTemperatura" name="umbralTemperatura" value="30" step="0.1">
+<div id="modalRangos"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1050; justify-content: center; align-items: center; backdrop-filter: blur(3px);">
+    <div
+        style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 2rem; border-radius: 8px; width: 90%; max-width: 450px; box-shadow: 0 5px 25px rgba(0,0,0,0.3);">
+        <h3 id="modalTitulo"
+            style="margin-top: 0; color: var(--text-color); border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Editar Rango</h3>
+
+        <form id="formRangos">
+            <input type="hidden" id="editParametro">
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem; margin-bottom: 2rem;">
+                <div style="flex: 1;">
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: bold; font-size: 0.85rem;">MÍNIMO
+                        PERMITIDO</label>
+                    <input type="number" step="0.01" id="inputMin" required
+                        style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-light); color: var(--text-color); font-size: 1.1rem; text-align: center;">
+                </div>
+                <div style="flex: 1;">
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: bold; font-size: 0.85rem;">MÁXIMO
+                        PERMITIDO</label>
+                    <input type="number" step="0.01" id="inputMax" required
+                        style="width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-light); color: var(--text-color); font-size: 1.1rem; text-align: center;">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="umbralPH">Mín. pH</label>
-                <input type="number" id="umbralPH" name="umbralPH" value="6.5" step="0.1">
-            </div>
-            <div class="form-group">
-                <label for="umbralTurbidez">Máx. Turbidez (NTU)</label>
-                <input type="number" id="umbralTurbidez" name="umbralTurbidez" value="5" step="0.1">
-            </div>
-            <div class="form-group">
-                <label for="umbralOxigeno">Mín. Oxígeno (mg/L)</label>
-                <input type="number" id="umbralOxigeno" name="umbralOxigeno" value="4" step="0.1">
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn-primary btn-guardar">
-                    <i class="fas fa-save"></i> Guardar umbrales
-                </button>
+
+            <div style="display: flex; justify-content: flex-end; gap: 15px;">
+                <button type="button" id="btnCerrarModal" class="btn"
+                    style="background: var(--bg-light); color: var(--text-color); border: 1px solid var(--border-color); padding: 10px 20px;">Cancelar</button>
+                <button type="submit" class="btn-primary" style="padding: 10px 20px; background-color: #2b7a78;"><i
+                        class="fas fa-save"></i> Guardar Cambios</button>
             </div>
         </form>
     </div>
@@ -213,6 +170,14 @@
 {% block extra_js %}
 <script>
     window.API_TOKEN = "{{ api_token|escapejs }}";
+
+    try {
+        window.USER_DATA = JSON.parse('{{ user_json|escapejs }}' || '{}');
+        window.RANGOS_LOCALES = JSON.parse('{{ estanques_json|escapejs }}' || '[]');
+    } catch (e) {
+        console.error("Error al cargar los datos en Ajustes:", e);
+        window.RANGOS_LOCALES = [];
+    }
 </script>
 <script src="{% static 'js/ajustes.js' %}"></script>
 {% endblock %}

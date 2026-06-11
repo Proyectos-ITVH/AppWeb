@@ -102,6 +102,15 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
+# ==========================================
+# SEGURIDAD DE SESIONES Y PERFILES
+# ==========================================
+# 1. Destruye la sesión y el perfil en cuanto el usuario cierra la pestaña/navegador
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# 2. Si el usuario deja la página abierta y se va, la sesión explota y se borra a los 30 minutos (1800 segundos)
+SESSION_COOKIE_AGE = 1800
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

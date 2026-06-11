@@ -7,8 +7,8 @@
     </button>
 </div>
 
-<div class="navbar-nav">
-    <ul>
+<div class="navbar-nav" style="flex-grow: 1; display: flex; flex-direction: column;">
+    <ul style="flex-grow: 1;">
         <li>
             <a href="{% url 'dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                 <i class="fas fa-home"></i> Dashboard
@@ -16,8 +16,9 @@
         </li>
 
         {% if request.session.user.rolUser == 'admin' %}
+            <li class="menu-label" style="padding: 1rem 1.5rem 0.5rem; font-size: 0.75rem; color: var(--text-muted); font-weight: bold; letter-spacing: 1px;">ADMINISTRACIÓN</li>
             
-            <li class="menu-label">ADMINISTRACIÓN</li> <li>
+            <li>
                 <a href="{% url 'usuarios' %}" class="{% if request.resolver_match.url_name == 'usuarios' %}active{% endif %}">
                     <i class="fas fa-users"></i> Usuarios
                 </a>
@@ -41,19 +42,20 @@
                 </a>
             </li>
         {% endif %}
-        </ul>
+    </ul>
+</div>
 
-    <div class="navbar-profile">
-        <details>
-            <summary>
-                <i class="fas fa-user-circle"></i> 
-                {{ request.session.user.nombre|default:"Usuario" }}
-                <i class="fas fa-chevron-up" style="margin-left: auto; font-size: 0.8rem;"></i>
-            </summary>
-            <ul>
-                <li><a href="{% url 'perfil' %}"><i class="fas fa-user"></i> Mi perfil</a></li>
-                <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a></li>
-            </ul>
-        </details>
+<div class="sidebar-user-footer">
+    <div class="user-info">
+        <i class="fas fa-user-circle user-avatar"></i>
+        <span class="user-name">{{ request.session.user.nombre_display|default:"Usuario" }}</span>
+    </div>
+    <div class="user-actions">
+        <a href="{% url 'perfil' %}" class="action-btn" title="Mi perfil">
+            <i class="fas fa-user-cog"></i>
+        </a>
+        <a href="{% url 'logout' %}" class="action-btn btn-logout" title="Cerrar sesión">
+            <i class="fas fa-sign-out-alt"></i>
+        </a>
     </div>
 </div>

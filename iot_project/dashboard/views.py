@@ -4,6 +4,9 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from datetime import datetime
 import json
+import json
+from .models import ConfiguracionEstanque
+from .models import ConfiguracionEstanque, SensorPersonalizado
 
 API_BASE_URL = 'https://api-iot-lxy7.onrender.com/api'
 
@@ -83,10 +86,12 @@ def login_view(request):
                 error_message = error_data.get('message', 'Error: Credenciales incorrectas.')
             else:
                 data = response.json()
+                user = data.get('user')                        # 1. Primero guardas en variable
+                user['nombre_display'] = email.split('@')[0]   # 2. Le agregas el campo
                 request.session['api_token'] = data.get('token')
-                request.session['user'] = data.get('user')
+                request.session['user'] = user                 # 3. Luego guardas en sesión
                 request.session.pop('last_alert_time', None)
-                return redirect('dashboard')
+            return redirect('dashboard')
 
         # CORREGIDO: Usar requests.exceptions
         except requests.exceptions.RequestException as e:
@@ -106,134 +111,156 @@ def logout_view(request):
     return redirect('login')
 
 def obtener_datos_json(request):
-    """ 
-    Vista que devuelve JSON para actualizar el dashboard vía AJAX.
-    Esta es la que consulta dashboard.js 
-    """
     token = request.session.get('api_token')
     if not token:
         return JsonResponse({'error': 'No autorizado'}, status=401)
 
     headers = {'Authorization': f'Bearer {token}'}
-    data = {}
+    estanques_lista = []
+    all_problems = []
 
     try:
-        # 1. Obtener estanques
         tanks_res = requests.get(f'{API_BASE_URL}/tanks', headers=headers, timeout=5)
         if tanks_res.ok:
             tanks = tanks_res.json()
-            if tanks:
-                estanque_id = tanks[0]['_id']
+            
+            for tank in tanks:
+                t_id = tank['_id']
+                tank_data = {
+                    'id': t_id,
+                    'nombre': tank.get('nombre', 'Estanque sin nombre'),
+                    'temperatura': '--', 'temp_status': '',
+                    'ph': '--', 'ph_status': '',
+                    'solidos_disueltos': '--', 'tds_status': '',
+                    'oxigeno': '--', 'oxigeno_status': ''
+                }
                 
-                # 2. Obtener lecturas
+                # ← Cargamos los rangos configurados por el usuario
+                config, _ = ConfiguracionEstanque.objects.get_or_create(
+                    estanque_id=t_id,
+                    defaults={'nombre_estanque': tank.get('nombre', 'Estanque')}
+                )
+                
+                
+
                 readings_res = requests.get(
-                    f'{API_BASE_URL}/sensor-readings/{estanque_id}?limit=1', 
+                    f'{API_BASE_URL}/sensor-readings/{t_id}?limit=1', 
                     headers=headers, timeout=5
                 )
                 
                 if readings_res.ok:
                     lecturas = readings_res.json()
                     if lecturas:
-                        latest = lecturas[0]
-                        sensores = latest.get('valores_sensores', {})
+                        sensores = lecturas[0].get('valores_sensores', {})
                         
-                        # Preparamos los datos EXACTOS que espera el JS
-                        data = {
-                            'temperatura': sensores.get('temperatura'),
-                            'temp_status': get_value_status(sensores.get('temperatura'), 'temperatura'),
-                            
-                            'ph': sensores.get('ph'),
-                            'ph_status': get_value_status(sensores.get('ph'), 'ph'),
-                            
-                            'solidos_disueltos': sensores.get('solidos_disueltos'),
-                            'tds_status': get_value_status(sensores.get('solidos_disueltos'), 'tds'),
-                            
-                            'oxigeno': sensores.get('oxigeno'),
-                            'oxigeno_status': get_value_status(sensores.get('oxigeno'), 'oxigeno'),
-                            
-                            'timestamp': datetime.now().isoformat() # Hora del servidor
-                        }
+                        tank_data['temperatura'] = sensores.get('temperatura', '--')
+                        tank_data['temp_status'] = get_value_status(sensores.get('temperatura'), 'temperatura')
+                        tank_data['ph'] = sensores.get('ph', '--')
+                        tank_data['ph_status'] = get_value_status(sensores.get('ph'), 'ph')
+                        tank_data['solidos_disueltos'] = sensores.get('solidos_disueltos', '--')
+                        tank_data['tds_status'] = get_value_status(sensores.get('solidos_disueltos'), 'tds')
+                        tank_data['oxigeno'] = sensores.get('oxigeno', '--')
+                        tank_data['oxigeno_status'] = get_value_status(sensores.get('oxigeno'), 'oxigeno')
+                        
+                        # ← Ahora verificamos contra los rangos de la BD
+                        def fuera_de_rango(valor, minimo, maximo):
+                            try:
+                                v = float(valor)
+                                return v < minimo or v > maximo
+                            except (TypeError, ValueError):
+                                return False
+
+                        if fuera_de_rango(sensores.get('temperatura'), config.temp_min, config.temp_max):
+                            all_problems.append({'tank_name': tank_data['nombre'], 'name': 'Temperatura', 'value': sensores.get('temperatura')})
+                        if fuera_de_rango(sensores.get('ph'), config.ph_min, config.ph_max):
+                            all_problems.append({'tank_name': tank_data['nombre'], 'name': 'pH', 'value': sensores.get('ph')})
+                        if fuera_de_rango(sensores.get('solidos_disueltos'), config.tds_min, config.tds_max):
+                            all_problems.append({'tank_name': tank_data['nombre'], 'name': 'Sólidos Disueltos', 'value': sensores.get('solidos_disueltos')})
+                        if fuera_de_rango(sensores.get('oxigeno'), config.oxigeno_min, config.oxigeno_max):
+                            all_problems.append({'tank_name': tank_data['nombre'], 'name': 'Oxígeno', 'value': sensores.get('oxigeno')})
+
+                estanques_lista.append(tank_data)
+
+        return JsonResponse({
+            'estanques': estanques_lista, 
+            'problems': all_problems, 
+            'timestamp': datetime.now().isoformat()
+        })
 
     except Exception as e:
         print(f"Error API JSON: {e}")
         return JsonResponse({'error': 'Error interno'}, status=500)
 
-    return JsonResponse(data)
-
-
 def dashboard_view(request):
-    """ Vista principal del Dashboard. """
-    
-    # 1. Proteger la ruta
+    """ Vista principal del Dashboard Multi-Estanque. """
     token = request.session.get('api_token')
     if not token:
         return redirect('login')
 
-    # 2. Preparar el contexto
     context = {}
     headers = {'Authorization': f'Bearer {token}'}
+    estanques_data = []
+    all_problems = []
 
     try:
-        # CORREGIDO: Usar requests.get
         tanks_response = requests.get(f'{API_BASE_URL}/tanks', headers=headers, timeout=10)
         tanks_response.raise_for_status()
         tanks = tanks_response.json()
 
-        if tanks:
-            estanque_id = tanks[0]['_id']
+        for tank in tanks:
+            t_id = tank['_id']
+            tank_info = {
+                'id': t_id,
+                'nombre': tank.get('nombre', 'Estanque'),
+                'temperatura': '--', 'ph': '--', 'solidos_disueltos': '--', 'oxigeno': '--',
+                'temp_status': '', 'ph_status': '', 'tds_status': '', 'oxigeno_status': ''
+            }
             
-            # CORREGIDO: Usar requests.get
+            # Limpiamos el ID para compatibilidad con el HTML
+            tank_info['id_limpio'] = t_id
+
             readings_response = requests.get(
-                f'{API_BASE_URL}/sensor-readings/{estanque_id}?limit=1', 
-                headers=headers, 
-                timeout=10
+                f'{API_BASE_URL}/sensor-readings/{t_id}?limit=1', 
+                headers=headers, timeout=10
             )
-            readings_response.raise_for_status()
-            readings = readings_response.json()
-
-            if readings:
-                latest_data = readings[0]
-                sensores = latest_data.get('valores_sensores', {})
-                
-                context['temperatura'] = sensores.get('temperatura')
-                context['ph'] = sensores.get('ph')
-                context['solidos_disueltos'] = sensores.get('solidos_disueltos')
-                context['oxigeno'] = sensores.get('oxigeno')
-                
-                if latest_data.get('timestamp'):
-                    context['timestamp'] = datetime.fromisoformat(
-                        latest_data['timestamp'].replace('Z', '+00:00')
-                    )
-
-                context['temp_status'] = get_value_status(context['temperatura'], 'temperatura')
-                context['ph_status'] = get_value_status(context['ph'], 'ph')
-                context['tds_status'] = get_value_status(context['solidos_disueltos'], 'tds')
-                context['oxigeno_status'] = get_value_status(context['oxigeno'], 'oxigeno')
-
-                problems = check_critical_parameters(sensores)
-                if problems:
-                    current_time = datetime.now().timestamp()
-                    last_alert_time = request.session.get('last_alert_time', 0)
-                    ALERT_COOLDOWN = 2 * 60 * 60
-
-                    if (current_time - last_alert_time) >= ALERT_COOLDOWN:
-                        context['show_alert'] = True
-                        context['problems'] = problems
-                        request.session['last_alert_time'] = current_time
-
-    # CORREGIDO: Usar requests.exceptions
-    except requests.exceptions.RequestException as e:
-        if hasattr(e, 'response') and e.response is not None:
-            if e.response.status_code in [401, 403]:
-                request.session.flush()
-                return redirect('login')
+            
+            if readings_response.ok:
+                readings = readings_response.json()
+                if readings:
+                    latest_data = readings[0]
+                    sensores = latest_data.get('valores_sensores', {})
+                    
+                    tank_info['temperatura'] = sensores.get('temperatura')
+                    tank_info['ph'] = sensores.get('ph')
+                    tank_info['solidos_disueltos'] = sensores.get('solidos_disueltos')
+                    tank_info['oxigeno'] = sensores.get('oxigeno')
+                    
+                    tank_info['temp_status'] = get_value_status(sensores.get('temperatura'), 'temperatura')
+                    tank_info['ph_status'] = get_value_status(sensores.get('ph'), 'ph')
+                    tank_info['tds_status'] = get_value_status(sensores.get('solidos_disueltos'), 'tds')
+                    tank_info['oxigeno_status'] = get_value_status(sensores.get('oxigeno'), 'oxigeno')
+                    
+                    probs = check_critical_parameters(sensores)
+                    if probs:
+                        for p in probs:
+                            all_problems.append({
+                                'tank_name': tank_info['nombre'],
+                                'name': p['name'],
+                                'value': p['value']
+                            })
+                            
+            estanques_data.append(tank_info)
         
-        print(f"Error al obtener datos del API: {e}")
-        context['api_error'] = 'No se pudieron cargar los datos de los sensores.'
-    
+        context['estanques_data'] = estanques_data
+        context['timestamp'] = datetime.now()
+        
+        if all_problems:
+            context['show_alert'] = True
+            context['problems'] = all_problems
+
     except Exception as e:
         print(f"Error inesperado en dashboard: {e}")
-        context['api_error'] = 'Ocurrió un error inesperado.'
+        context['api_error'] = 'No se pudieron estructurar los paneles locales.'
 
     return render(request, 'dashboard/principal.html', context)
 
@@ -340,16 +367,106 @@ def historial_view(request):
 
 def ajustes_view(request):
     token = request.session.get('api_token')
-    if not token: return redirect('login')
-
     user_data = request.session.get('user', {})
+
+    if not token:
+        return redirect('login')
     if user_data.get('rolUser') != 'admin':
         return redirect('dashboard')
 
-    context = {
-        'api_token': token,
-        'user_json': json.dumps(user_data) # <-- La línea mágica
-    }
+    headers = {'Authorization': f'Bearer {token}'}
+
+    # 1. RECEPCIÓN DE DATOS (POST)
+    if request.method == 'POST':
+        try:
+            datos = json.loads(request.body)
+            action = datos.get('action')
+            estanque_id = datos.get('estanque_id')
+
+            # ACCIÓN A: AGREGAR SENSOR NUEVO
+            if action == 'agregar_sensor':
+                SensorPersonalizado.objects.create(
+                    estanque_id=estanque_id,
+                    nombre=datos.get('nombre'),
+                    tipo=datos.get('tipo'),
+                    rango_min=float(datos.get('rango_min')),
+                    rango_max=float(datos.get('rango_max'))
+                )
+                return JsonResponse({'status': 'success', 'message': 'Nuevo sensor registrado localmente'})
+
+            # ACCIÓN B: EDITAR SENSOR EXISTENTE
+            elif action == 'editar_sensor':
+                param_id = str(datos.get('param_id'))
+                val_min = float(datos.get('rango_min'))
+                val_max = float(datos.get('rango_max'))
+
+                if param_id.startswith('extra_'):
+                    # Es un sensor nuevo/personalizado
+                    real_id = param_id.split('_')[1]
+                    sensor = SensorPersonalizado.objects.get(id=real_id)
+                    sensor.rango_min = val_min
+                    sensor.rango_max = val_max
+                    sensor.save()
+                else:
+                    # Es uno de los 4 sensores base
+                    config = ConfiguracionEstanque.objects.get(estanque_id=estanque_id)
+                    if param_id == 'temp':
+                        config.temp_min, config.temp_max = val_min, val_max
+                    elif param_id == 'ph':
+                        config.ph_min, config.ph_max = val_min, val_max
+                    elif param_id == 'tds':
+                        config.tds_min, config.tds_max = val_min, val_max
+                    elif param_id == 'oxigeno':
+                        config.oxigeno_min, config.oxigeno_max = val_min, val_max
+                    config.save()
+
+                return JsonResponse({'status': 'success', 'message': 'Rangos actualizados'})
+                
+        except Exception as e:
+            print(f"Error en ajustes: {e}")
+            return JsonResponse({'status': 'error', 'message': 'Hubo un error al procesar'}, status=400)
+
+    # 2. CARGA DE LA PÁGINA (GET)
+    context = {'api_token': token, 'user_json': json.dumps(user_data)}
+    try:
+        tanks_res = requests.get(f'{API_BASE_URL}/tanks', headers=headers, timeout=15)
+        if tanks_res.ok:
+            tanks = tanks_res.json()
+        else:
+            tanks = []
+
+        estanques_con_rangos = []
+
+        for tank in tanks:
+            t_id = tank['_id']
+            t_nombre = tank.get('nombre', 'Estanque')
+            
+            config, _ = ConfiguracionEstanque.objects.get_or_create(
+                estanque_id=t_id, defaults={'nombre_estanque': t_nombre}
+            )
+            
+            sensores_extra = list(SensorPersonalizado.objects.filter(estanque_id=t_id).values(
+                'id', 'nombre', 'tipo', 'rango_min', 'rango_max'
+            ))
+            
+            estanques_con_rangos.append({
+                'id': t_id,
+                'nombre': t_nombre,
+                'rangos_fijos': {
+                    'temp_min': config.temp_min, 'temp_max': config.temp_max,
+                    'ph_min': config.ph_min, 'ph_max': config.ph_max,
+                    'tds_min': config.tds_min, 'tds_max': config.tds_max,
+                    'oxigeno_min': config.oxigeno_min, 'oxigeno_max': config.oxigeno_max,
+                },
+                'sensores_extra': sensores_extra
+            })
+        
+        context['estanques_json'] = json.dumps(estanques_con_rangos)
+
+    except Exception as e:
+        print("Error:", e)
+        context['estanques_json'] = '[]'
+
     return render(request, 'dashboard/ajustes.html', context)
     
 def perfil_view(request):

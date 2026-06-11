@@ -1,320 +1,239 @@
-const API_BASE_URL = 'https://api-iot-lxy7.onrender.com/api';
-const token = window.API_TOKEN;
+document.addEventListener('DOMContentLoaded', function() {
 
-if (!token) {
-    window.location.href = "/";
-}
+    
 
-document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Cargar preferencias visuales locales
+    // ==========================================
+    // 1. CARGAR PREFERENCIAS VISUALES
+    // ==========================================
     cargarAjustesLocales();
-
-    // 2. Cargar lista real de estanques en el selector
-    await cargarEstanquesEnSelect();
-
-    // Escuchar el cambio de estanque para traer sus sensores
-    const selectEstanque = document.getElementById('selectEstanque');
-    if (selectEstanque) {
-        selectEstanque.addEventListener('change', (e) => cargarSensores(e.target.value));
-    }
-
-    // Formularios y Botones
-    const btnMostrarFormNuevo = document.getElementById('btnMostrarFormNuevo');
-    if (btnMostrarFormNuevo) {
-        btnMostrarFormNuevo.addEventListener('click', () => {
-            document.getElementById('seccionEditarSensor').style.display = 'none';
-            document.getElementById('seccionNuevoSensor').style.display = 'block';
-            window.location.hash = "seccionNuevoSensor";
-        });
-    }
-
-    const formNuevoSensor = document.getElementById('formNuevoSensor');
-    if (formNuevoSensor) formNuevoSensor.addEventListener('submit', agregarNuevoSensor);
-
-    const formEdicionSensor = document.getElementById('formEdicionSensor');
-    if (formEdicionSensor) formEdicionSensor.addEventListener('submit', actualizarSensorEnAPI);
-
     const formPreferencias = document.getElementById('formPreferencias');
     if (formPreferencias) formPreferencias.addEventListener('submit', guardarPreferencias);
 
-    const formAlertas = document.getElementById('formAlertas');
-    if (formAlertas) formAlertas.addEventListener('submit', guardarAlertas);
-});
+    // ==========================================
+    // 2. LÓGICA DE CONTROL DE RANGOS
+    // ==========================================
+    const selectEstanque = document.getElementById('selectEstanqueAjustes');
+    const tablaBody = document.getElementById('tabla-rangos-body');
+    
+    const modalEdicion = document.getElementById('modalRangos');
+    const formEdicion = document.getElementById('formRangos');
+    const btnCerrarEdicion = document.getElementById('btnCerrarModal');
+    
+    const modalNuevo = document.getElementById('modalNuevoSensor');
+    const formNuevo = document.getElementById('formNuevoSensor');
+    const btnAbrirNuevo = document.getElementById('btnAbrirModalNuevo');
+    const btnCerrarNuevo = document.getElementById('btnCerrarModalNuevo');
+    
+    const parametros = [
+        { id: 'temp', nombre: '<i class="fas fa-temperature-high" style="color: #e74c3c; width: 25px;"></i> Temperatura (°C)', minKey: 'temp_min', maxKey: 'temp_max' },
+        { id: 'ph', nombre: '<i class="fas fa-vial" style="color: #2ecc71; width: 25px;"></i> pH', minKey: 'ph_min', maxKey: 'ph_max' },
+        { id: 'tds', nombre: '<i class="fas fa-tint" style="color: #3498db; width: 25px;"></i> Sólidos (TDS)', minKey: 'tds_min', maxKey: 'tds_max' },
+        { id: 'oxigeno', nombre: '<i class="fas fa-wind" style="color: #9b59b6; width: 25px;"></i> Oxígeno (mg/L)', minKey: 'oxigeno_min', maxKey: 'oxigeno_max' }
+    ];
 
-// ==========================================
-// 1. OBTENER ESTANQUES Y SENSORES (REAL API)
-// ==========================================
-async function cargarEstanquesEnSelect() {
-    const select = document.getElementById('selectEstanque');
-    if (!select) return;
+    let estanqueActual = null;
 
-    try {
-        const response = await fetch(`${API_BASE_URL}/tanks`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+    // INICIALIZACIÓN DE LA TABLA
+    if (window.RANGOS_LOCALES && window.RANGOS_LOCALES.length > 0) {
+        if (selectEstanque) selectEstanque.innerHTML = '';
+        window.RANGOS_LOCALES.forEach(est => {
+            const option = document.createElement('option');
+            option.value = est.id;
+            option.textContent = est.nombre;
+            if (selectEstanque) selectEstanque.appendChild(option);
         });
-        if (!response.ok) throw new Error("Error obteniendo estanques");
-        
-        const estanques = await response.json();
-        select.innerHTML = '';
-        
-        if (estanques.length === 0) {
-            select.innerHTML = '<option value="">No hay estanques registrados</option>';
-            return;
-        }
 
-        estanques.forEach(estanque => {
-            if (estanque._id) {
-                const option = document.createElement('option');
-                option.value = estanque._id;
-                option.textContent = estanque.nombre || `Estanque ${estanque._id.substring(0,6)}`;
-                select.appendChild(option);
-            }
-        });
-
-        // Cargar los sensores del primer estanque disponible
-        cargarSensores(select.value);
-
-    } catch (error) {
-        console.error("Error al cargar estanques:", error);
+        if (selectEstanque) selectEstanque.addEventListener('change', (e) => cargarTabla(e.target.value));
+        cargarTabla(window.RANGOS_LOCALES[0].id);
+    } else {
+        if (tablaBody) tablaBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 30px; color: var(--text-muted);">No hay estanques registrados o el servidor está cargando.</td></tr>';
     }
-}
 
-async function cargarSensores(estanqueId) {
-    const tbody = document.getElementById('tablaSensoresBody');
-    if (!tbody || !estanqueId) return;
+    function cargarTabla(idEstanque) {
+        estanqueActual = window.RANGOS_LOCALES.find(e => e.id === idEstanque);
+        if (!estanqueActual || !tablaBody) return;
+        tablaBody.innerHTML = '';
 
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;"><i class="fas fa-spinner fa-spin"></i> Cargando sensores...</td></tr>';
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/sensors/tank/${estanqueId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
-        if (!response.ok) throw new Error("Aún no hay sensores para este estanque o la ruta no existe en la API.");
-        
-        const sensores = await response.json();
-        
-        if (sensores.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No hay sensores registrados en este estanque.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = '';
-        sensores.forEach(sensor => {
+        const crearFila = (id, nombre, min, max) => {
             const tr = document.createElement('tr');
-            let badgeColor = "#e8f5e9"; let textColor = "#1b5e20"; // Verde (Default/OX)
-            if(sensor.tipo === "PH") { badgeColor = "#e3f2fd"; textColor = "#0d47a1"; } // Azul
-            if(sensor.tipo === "TEMP") { badgeColor = "#ffebee"; textColor = "#b71c1c"; } // Rojo
-            if(sensor.tipo === "TDS") { badgeColor = "#fff3e0"; textColor = "#e65100"; } // Naranja
-
+            tr.style.borderBottom = "1px solid var(--border-color)";
             tr.innerHTML = `
-                <td><strong>${sensor.nombre}</strong></td>
-                <td><span class="badge" style="background-color: ${badgeColor}; color: ${textColor}; padding: 2px 6px; border-radius: 4px;">${sensor.tipo}</span></td>
-                <td>${sensor.rango_minimo}</td>
-                <td>${sensor.rango_maximo}</td>
-                <td>
-                    <button class="btn-primary" style="padding: 4px 8px; font-size: 0.8rem; border-radius: 4px;" onclick="prepararEdicion('${sensor._id}', '${sensor.nombre}', '${sensor.tipo}', ${sensor.rango_minimo}, ${sensor.rango_maximo})">
+                <td style="padding: 15px; font-weight: bold; font-size: 1.05rem;">${nombre}</td>
+                <td style="padding: 15px; text-align: center; color: var(--danger, #e74c3c); font-weight: bold;">${min}</td>
+                <td style="padding: 15px; text-align: center; color: var(--danger, #e74c3c); font-weight: bold;">${max}</td>
+                <td style="padding: 15px; text-align: center;">
+                    <button class="btn-primary btn-editar" data-param="${id}" style="padding: 6px 12px; font-size: 0.9rem; border-radius: 4px; background-color: #2b7a78; color: white; border: none; cursor: pointer;">
                         <i class="fas fa-edit"></i> Editar
                     </button>
                 </td>
             `;
-            tbody.appendChild(tr);
+            tablaBody.appendChild(tr);
+        };
+
+        // Pintamos los fijos
+        parametros.forEach(param => {
+            crearFila(param.id, param.nombre, estanqueActual.rangos_fijos[param.minKey], estanqueActual.rangos_fijos[param.maxKey]);
         });
 
-    } catch (error) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger);">${error.message}</td></tr>`;
-    }
-}
-
-// ==========================================
-// 2. AGREGAR NUEVO SENSOR (POST - REAL API)
-// ==========================================
-async function agregarNuevoSensor(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('.btn-guardar');
-    const textoOriginal = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-    btn.disabled = true;
-
-    const estanqueId = document.getElementById('selectEstanque').value;
-    const nuevoSensor = {
-        estanque_id: estanqueId,
-        nombre: document.getElementById('nuevoNombreSensor').value,
-        tipo: document.getElementById('nuevoTipoSensor').value,
-        rango_minimo: parseFloat(document.getElementById('nuevoRangoMin').value),
-        rango_maximo: parseFloat(document.getElementById('nuevoRangoMax').value)
-    };
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/sensors`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(nuevoSensor)
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || "Error al registrar en la base de datos.");
+        // Pintamos los extra (si existen)
+        if (estanqueActual.sensores_extra) {
+            estanqueActual.sensores_extra.forEach(sensor => {
+                const nombreHtml = `<i class="fas fa-microchip" style="color: #f39c12; width: 25px;"></i> ${sensor.nombre} (${sensor.tipo})`;
+                crearFila(`extra_${sensor.id}`, nombreHtml, sensor.rango_min, sensor.rango_max);
+            });
         }
 
-        mostrarNotificacion("Sensor registrado exitosamente en la API.", "success");
-        document.getElementById('formNuevoSensor').reset();
-        document.getElementById('seccionNuevoSensor').style.display = 'none';
-        
-        cargarSensores(estanqueId);
-
-    } catch (error) {
-        mostrarNotificacion(error.message, "error");
-    } finally {
-        btn.innerHTML = textoOriginal;
-        btn.disabled = false;
-    }
-}
-
-// ==========================================
-// 3. EDITAR SENSOR (PUT - REAL API)
-// ==========================================
-function prepararEdicion(id, nombre, tipo, min, max) {
-    document.getElementById('seccionNuevoSensor').style.display = 'none';
-    document.getElementById('seccionEditarSensor').style.display = 'block';
-    window.location.hash = "seccionEditarSensor";
-
-    document.getElementById('editSensorId').value = id;
-    document.getElementById('editNombreSensor').value = nombre;
-    document.getElementById('editTipoSensor').value = tipo;
-    document.getElementById('editRangoMin').value = min;
-    document.getElementById('editRangoMax').value = max;
-}
-
-async function actualizarSensorEnAPI(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('.btn-guardar');
-    const textoOriginal = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
-    btn.disabled = true;
-
-    const sensorId = document.getElementById('editSensorId').value;
-    const estanqueId = document.getElementById('selectEstanque').value;
-    
-    const datosActualizados = {
-        nombre: document.getElementById('editNombreSensor').value,
-        tipo: document.getElementById('editTipoSensor').value,
-        rango_minimo: parseFloat(document.getElementById('editRangoMin').value),
-        rango_maximo: parseFloat(document.getElementById('editRangoMax').value)
-    };
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/sensors/${sensorId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(datosActualizados)
+        // Eventos a los botones de editar
+        document.querySelectorAll('.btn-editar').forEach(btn => {
+            btn.addEventListener('click', (e) => abrirModalEdicion(e.currentTarget.getAttribute('data-param')));
         });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || "Error al actualizar en la base de datos.");
-        }
-
-        mostrarNotificacion("Parámetros actualizados exitosamente en la API.", "success");
-        document.getElementById('seccionEditarSensor').style.display = 'none';
-        
-        cargarSensores(estanqueId);
-
-    } catch (error) {
-        mostrarNotificacion(error.message, "error");
-    } finally {
-        btn.innerHTML = textoOriginal;
-        btn.disabled = false;
-    }
-}
-
-// ==========================================
-// 4. PREFERENCIAS LOCALES (TEMA / NOTIFICACIONES)
-// ==========================================
-function cargarAjustesLocales() {
-    const prefGuardadas = JSON.parse(localStorage.getItem('preferenciasIoT'));
-    if (prefGuardadas) {
-        if (document.getElementById('intervaloActualizacion')) document.getElementById('intervaloActualizacion').value = prefGuardadas.intervalo;
-        if (document.getElementById('tema')) document.getElementById('tema').value = prefGuardadas.tema;
-        if (document.getElementById('notificaciones')) document.getElementById('notificaciones').value = prefGuardadas.notificaciones;
-        aplicarTemaGlobal(prefGuardadas.tema);
     }
 
-    const umbralesGuardados = JSON.parse(localStorage.getItem('umbralesGlobales'));
-    if (umbralesGuardados) {
-        if (document.getElementById('umbralTemperatura')) document.getElementById('umbralTemperatura').value = umbralesGuardados.tempMax;
-        if (document.getElementById('umbralPH')) document.getElementById('umbralPH').value = umbralesGuardados.phMin;
-        if (document.getElementById('umbralTurbidez')) document.getElementById('umbralTurbidez').value = umbralesGuardados.turbidezMax;
-        if (document.getElementById('umbralOxigeno')) document.getElementById('umbralOxigeno').value = umbralesGuardados.oxigenoMin;
-    }
-}
+    // --- FUNCIONES DEL MODAL DE EDICIÓN ---
+    function abrirModalEdicion(paramId) {
+        document.getElementById('editParametro').value = paramId;
 
-function guardarPreferencias(e) {
-    e.preventDefault();
-    const preferencias = {
-        intervalo: document.getElementById('intervaloActualizacion').value,
-        tema: document.getElementById('tema').value,
-        notificaciones: document.getElementById('notificaciones').value
-    };
-    localStorage.setItem('preferenciasIoT', JSON.stringify(preferencias));
-    aplicarTemaGlobal(preferencias.tema);
-    mostrarNotificacion("Preferencias visuales guardadas", "success");
-}
-
-function guardarAlertas(e) {
-    e.preventDefault();
-    const umbrales = {
-        tempMax: document.getElementById('umbralTemperatura').value,
-        phMin: document.getElementById('umbralPH').value,
-        turbidezMax: document.getElementById('umbralTurbidez').value,
-        oxigenoMin: document.getElementById('umbralOxigeno').value
-    };
-    localStorage.setItem('umbralesGlobales', JSON.stringify(umbrales));
-    mostrarNotificacion("Umbrales globales guardados localmente", "success");
-}
-
-function aplicarTemaGlobal(tema) {
-    if (tema === 'oscuro') {
-        document.body.classList.add('dark-mode');
-    } else if (tema === 'claro') {
-        document.body.classList.remove('dark-mode');
-    } else {
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.body.classList.add('dark-mode');
+        if (paramId.startsWith('extra_')) {
+            const realId = parseInt(paramId.split('_')[1]);
+            const sensor = estanqueActual.sensores_extra.find(s => s.id === realId);
+            document.getElementById('modalTitulo').textContent = `Ajustar límites: ${sensor.nombre}`;
+            document.getElementById('inputMin').value = sensor.rango_min;
+            document.getElementById('inputMax').value = sensor.rango_max;
         } else {
-            document.body.classList.remove('dark-mode');
+            const paramConfig = parametros.find(p => p.id === paramId);
+            const nombreLimpio = paramConfig.nombre.replace(/<[^>]*>?/gm, ''); 
+            document.getElementById('modalTitulo').textContent = `Ajustar límites: ${nombreLimpio}`;
+            document.getElementById('inputMin').value = estanqueActual.rangos_fijos[paramConfig.minKey];
+            document.getElementById('inputMax').value = estanqueActual.rangos_fijos[paramConfig.maxKey];
+        }
+        if (modalEdicion) modalEdicion.style.display = 'flex';
+    }
+
+    if (btnCerrarEdicion) btnCerrarEdicion.addEventListener('click', () => modalEdicion.style.display = 'none');
+
+    if (formEdicion) {
+        formEdicion.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const paramId = document.getElementById('editParametro').value;
+            const valMin = parseFloat(document.getElementById('inputMin').value);
+            const valMax = parseFloat(document.getElementById('inputMax').value);
+
+            const datos = {
+                action: 'editar_sensor',
+                estanque_id: estanqueActual.id,
+                param_id: paramId,
+                rango_min: valMin,
+                rango_max: valMax
+            };
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify(datos)
+            }).then(() => window.location.reload());
+        });
+    }
+
+    // --- FUNCIONES DEL MODAL DE NUEVO SENSOR ---
+    if (btnAbrirNuevo) btnAbrirNuevo.addEventListener('click', () => modalNuevo.style.display = 'flex');
+    if (btnCerrarNuevo) btnCerrarNuevo.addEventListener('click', () => modalNuevo.style.display = 'none');
+
+    if (formNuevo) {
+        formNuevo.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btnSubmit = formNuevo.querySelector('button[type="submit"]');
+            if (btnSubmit) btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            
+            const datos = {
+                action: 'agregar_sensor',
+                estanque_id: estanqueActual.id,
+                nombre: document.getElementById('nuevoNombreSensor').value,
+                tipo: document.getElementById('nuevoTipoSensor').value.toUpperCase(),
+                rango_min: parseFloat(document.getElementById('nuevoRangoMin').value),
+                rango_max: parseFloat(document.getElementById('nuevoRangoMax').value)
+            };
+
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify(datos)
+            }).then(() => window.location.reload());
+        });
+    }
+
+    // ==========================================
+    // 3. FUNCIONES DE UTILIDAD Y SEGURIDAD
+    // ==========================================
+    function cargarAjustesLocales() {
+        const prefGuardadas = JSON.parse(localStorage.getItem('preferenciasIoT'));
+        if (prefGuardadas) {
+            if (document.getElementById('intervaloActualizacion')) document.getElementById('intervaloActualizacion').value = prefGuardadas.intervalo;
+            if (document.getElementById('tema')) document.getElementById('tema').value = prefGuardadas.tema;
+            if (document.getElementById('notificaciones')) document.getElementById('notificaciones').value = prefGuardadas.notificaciones;
+            aplicarTemaGlobal(prefGuardadas.tema);
         }
     }
-}
 
-// ==========================================
-// 5. UTILIDADES Y NOTIFICACIONES
-// ==========================================
-window.prepararEdicion = prepararEdicion; // Hacer la función global para el onclick del HTML
-
-function mostrarNotificacion(mensaje, tipo) {
-    const notificacion = document.getElementById('notificacion');
-    const icono = document.getElementById('notificacionIcono');
-    const texto = document.getElementById('notificacionMensaje');
-    
-    if (!notificacion) return;
-
-    texto.textContent = mensaje;
-    notificacion.className = `notificacion mostrar ${tipo === 'error' ? 'error' : ''}`;
-    
-    if (tipo === 'success') {
-        icono.className = 'fas fa-check-circle';
-    } else {
-        icono.className = 'fas fa-exclamation-triangle';
+    function guardarPreferencias(e) {
+        e.preventDefault();
+        const preferencias = {
+            intervalo: document.getElementById('intervaloActualizacion').value,
+            tema: document.getElementById('tema').value,
+            notificaciones: document.getElementById('notificaciones').value
+        };
+        localStorage.setItem('preferenciasIoT', JSON.stringify(preferencias));
+        aplicarTemaGlobal(preferencias.tema);
+        mostrarNotificacion("Preferencias visuales guardadas", "success");
     }
 
-    setTimeout(() => {
-        notificacion.classList.remove('mostrar');
-    }, 3000);
-}
+    function aplicarTemaGlobal(tema) {
+        if (tema === 'oscuro') {
+            document.body.classList.add('dark-mode');
+        } else if (tema === 'claro') {
+            document.body.classList.remove('dark-mode');
+        } else {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        }
+    }
+
+    function mostrarNotificacion(mensaje, tipo) {
+        const notificacion = document.getElementById('notificacion');
+        const icono = document.getElementById('notificacionIcono');
+        const texto = document.getElementById('notificacionMensaje');
+        
+        if (!notificacion) return;
+
+        texto.textContent = mensaje;
+        notificacion.className = `notificacion mostrar ${tipo === 'error' ? 'error' : ''}`;
+        
+        if (tipo === 'success') {
+            if (icono) icono.className = 'fas fa-check-circle';
+        } else {
+            if (icono) icono.className = 'fas fa-exclamation-triangle';
+        }
+
+        setTimeout(() => {
+            notificacion.classList.remove('mostrar');
+        }, 3000);
+    }
+
+    // Herramienta de seguridad de Django
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});

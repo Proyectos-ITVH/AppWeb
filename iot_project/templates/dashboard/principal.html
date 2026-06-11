@@ -4,81 +4,96 @@
 {% block title %}Dashboard - Sistema IoT{% endblock %}
 
 {% block content %}
-  <div class="card" id="dashboard-container" data-api-url="{% url 'api_datos' %}">
+<div id="dashboard-container" data-api-url="{% url 'api_datos' %}">
     
-    <h1>Panel de Control</h1>
-    <p>Monitoreo en tiempo real de la calidad del agua.</p>
-
-    <div class="dashboard-grid">
-      
-      <div class="dashboard-card">
-        <div class="dashboard-icon"><i class="fas fa-temperature-high"></i></div>
-        <div class="dashboard-value {{ temp_status|default:'' }}" id="temp-actual">
-          {{ temperatura|default:"--" }} °C
-        </div>
-        <div class="dashboard-label">Temperatura</div>
-      </div>
-
-      <div class="dashboard-card">
-        <div class="dashboard-icon"><i class="fas fa-vial"></i></div>
-        <div class="dashboard-value {{ ph_status|default:'' }}" id="ph-actual">
-          {{ ph|default:"--" }}
-        </div>
-        <div class="dashboard-label">pH</div>
-      </div>
-
-      <div class="dashboard-card">
-        <div class="dashboard-icon"><i class="fas fa-tint"></i></div>
-        <div class="dashboard-value {{ tds_status|default:'' }}" id="tds-actual">
-          {{ solidos_disueltos|default:"--" }} TDS
-        </div>
-        <div class="dashboard-label">Sólidos Disueltos</div>
-      </div>
-
-      <div class="dashboard-card">
-        <div class="dashboard-icon"><i class="fas fa-wind"></i></div>
-        <div class="dashboard-value {{ oxigeno_status|default:'' }}" id="oxigeno-actual">
-          {{ oxigeno|default:"--" }} mg/L
-        </div>
-        <div class="dashboard-label">Oxígeno Disuelto</div>
-      </div>
-
+    <div class="card" style="margin-bottom: 2rem; padding: 1.5rem 2rem;">
+        <h1>Panel de Control de Estanques</h1>
+        <p style="margin: 0; color: var(--text-muted);">Monitoreo simultáneo en tiempo real de la calidad del agua.</p>
     </div>
 
-    <div class="last-check">
-        <i class="fas fa-clock"></i> Última actualización: 
-        <span id="last-update">
-            {% if timestamp %}
-                {{ timestamp|date:"d/m/Y, h:i:s A" }}
-            {% else %}
-                --
-            {% endif %}
-        </span>
-    </div>
-  </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;">
+        {% for estanque in estanques_data %}
+        <div class="card" style="margin-bottom: 0; padding: 2rem; display: flex; flex-direction: column; justify-content: space-between;">
+            
+            <h3 style="margin-bottom: 1.5rem; color: var(--primary); display: flex; align-items: center; gap: 10px; font-size: 1.4rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                <i class="fas fa-water"></i> {{ estanque.nombre }}
+            </h3>
+            
+            <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; margin: 0;">
+                
+                <div class="dashboard-card" style="padding: 1.2rem; min-height: 120px;">
+                    <div class="dashboard-icon" style="width: 45px; height: 45px; font-size: 1.4rem;"><i class="fas fa-temperature-high"></i></div>
+                    <div class="dashboard-value {{ estanque.temp_status }}" id="temp-{{ estanque.id_limpio }}" style="font-size: 1.7rem; font-weight: 700;">
+                        {{ estanque.temperatura|default:"--" }} °C
+                    </div>
+                    <div class="dashboard-label" style="font-size: 0.85rem;">Temperatura</div>
+                </div>
 
-  <div class="alert-overlay {% if show_alert %}active{% endif %}" id="alertOverlay">
-    <div class="alert-box">
-      <div class="alert-header">
-        <i class="fas fa-exclamation-triangle alert-icon"></i>
-        <h3 class="alert-title">Valores Críticos</h3>
-      </div>
-      <div class="alert-message">Valores fuera de rango detectados.</div>
-      
-      <div class="alert-parameters">
-        {% for problem in problems %}
-            <div class="parameter-item">
-                <span>{{ problem.name }}:</span>
-                <strong>{{ problem.value }}</strong>
+                <div class="dashboard-card" style="padding: 1.2rem; min-height: 120px;">
+                    <div class="dashboard-icon" style="width: 45px; height: 45px; font-size: 1.4rem;"><i class="fas fa-vial"></i></div>
+                    <div class="dashboard-value {{ estanque.ph_status }}" id="ph-{{ estanque.id_limpio }}" style="font-size: 1.7rem; font-weight: 700;">
+                        {{ estanque.ph|default:"--" }}
+                    </div>
+                    <div class="dashboard-label" style="font-size: 0.85rem;">pH</div>
+                </div>
+
+                <div class="dashboard-card" style="padding: 1.2rem; min-height: 120px;">
+                    <div class="dashboard-icon" style="width: 45px; height: 45px; font-size: 1.4rem;"><i class="fas fa-tint"></i></div>
+                    <div class="dashboard-value {{ estanque.tds_status }}" id="tds-{{ estanque.id_limpio }}" style="font-size: 1.7rem; font-weight: 700;">
+                        {{ estanque.solidos_disueltos|default:"--" }} TDS
+                    </div>
+                    <div class="dashboard-label" style="font-size: 0.85rem;">Sólidos Disueltos</div>
+                </div>
+
+                <div class="dashboard-card" style="padding: 1.2rem; min-height: 120px;">
+                    <div class="dashboard-icon" style="width: 45px; height: 45px; font-size: 1.4rem;"><i class="fas fa-wind"></i></div>
+                    <div class="dashboard-value {{ estanque.oxigeno_status }}" id="oxigeno-{{ estanque.id_limpio }}" style="font-size: 1.7rem; font-weight: 700;">
+                        {{ estanque.oxigeno|default:"--" }} mg/L
+                    </div>
+                    <div class="dashboard-label" style="font-size: 0.85rem;">Oxígeno Disuelto</div>
+                </div>
+
             </div>
+        </div>
+        {% empty %}
+        <div class="card" style="text-align: center; padding: 3rem;">
+            <p style="font-size: 1.2rem; color: var(--text-muted);">No se encontraron estanques configurados en el sistema.</p>
+        </div>
         {% endfor %}
-      </div>
-
-      <div class="alert-buttons">
-        <button class="btn btn-primary" id="alertDismissBtn">Entendido</button>
-      </div>
     </div>
-  </div>
+
+    <div class="card" style="margin-top: 2rem; padding: 1rem 2rem;">
+        <div class="last-check" style="margin: 0; border: none; padding: 0;">
+            <i class="fas fa-clock"></i> Última actualización global: 
+            <span id="last-update" style="font-weight: 600; color: var(--text-dark);">
+                {% if timestamp %}{{ timestamp|date:"h:i:s A" }}{% else %}--{% endif %}
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="alert-overlay {% if show_alert %}active{% endif %}" id="alertOverlay">
+    <div class="alert-box">
+        <div class="alert-header">
+            <i class="fas fa-exclamation-triangle alert-icon"></i>
+            <h3 class="alert-title">Valores Críticos Detectados</h3>
+        </div>
+        <div class="alert-message">Se han registrado lecturas fuera de los parámetros de seguridad establecidos:</div>
+        
+        <div class="alert-parameters" id="alert-parameters-container">
+            {% for problem in problems %}
+                <div class="parameter-item">
+                    <span>[{{ problem.tank_name }}] {{ problem.name }}:</span>
+                    <strong>{{ problem.value }}</strong>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="alert-buttons">
+            <button class="btn btn-primary" id="alertDismissBtn">Entendido</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}

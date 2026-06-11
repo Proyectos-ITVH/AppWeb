@@ -98,6 +98,8 @@ main {
   position: sticky;
   top: 0;
   transition: all var(--transition);
+  height: 100vh; 
+  min-height: 100vh;
   
 }
 
@@ -106,7 +108,7 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--sidebar-border-color); /* Borde oscuro */
+  border-bottom: 1px solid var(--sidebar-border-color); 
 }
 .sidebar-header h2 {
   margin: 0;
@@ -114,11 +116,11 @@ main {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--text-light); /* Texto claro */
+  color: var(--text-light); 
 }
 
 .sidebar-close-btn {
-  display: none; /* Solo para móvil */
+  display: none; 
   background: none;
   border: none;
   color: var(--text-light);
@@ -127,7 +129,7 @@ main {
 }
 
 .navbar-nav {
-  flex-grow: 1; /* Empuja el perfil hacia abajo */
+  flex-grow: 1; 
   margin-top: 1rem;
 }
 .navbar-nav ul {
@@ -139,7 +141,7 @@ main {
   margin: 0;
 }
 .navbar-nav a {
-  color: #bdc3c7; /* Texto de link (gris claro) */
+  color: #bdc3c7; 
   font-weight: 500;
   text-decoration: none;
   padding: 1rem 1.5rem;
@@ -157,61 +159,67 @@ main {
   background-color: var(--bg-sidebar-hover);
   color: var(--text-light);
   font-weight: 600;
-  border-left-color: var(--primary); /* Línea azul activa */
+  border-left-color: var(--primary); 
 }
 
-/* Perfil (al fondo) */
-.navbar-profile {
-  padding: 1rem;
-  border-top: 1px solid var(--sidebar-border-color); /* Borde oscuro */
-  margin-top: auto; /* Asegura que esté al final */
-  position: relative; /* Needed for absolute positioning of dropdown */
-}
-.navbar-profile details summary {
-  cursor: pointer;
-  list-style: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0.75rem;
-  border-radius: var(--border-radius);
-  transition: background-color var(--transition);
-  color: var(--text-light); /* Texto claro */
-}
-.navbar-profile details summary i { font-size: 1.25rem; }
-.navbar-profile details summary:hover,
-.navbar-profile details[open] summary {
-  background-color: var(--bg-sidebar-hover);
+/* ==========================================
+   TARJETA DE USUARIO FIJA (FOOTER DEL SIDEBAR)
+   ========================================== */
+.sidebar-user-footer {
+    margin-top: auto; /* Esto empuja la tarjeta hasta el fondo del menú mágico de 100vh */
+    padding: 1rem;
+    border-top: 1px solid var(--sidebar-border-color, #2c3e50);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: rgba(0, 0, 0, 0.1); /* Un fondo ligeramente más oscuro para resaltar */
 }
 
-/* Menú desplegable del perfil */
-.navbar-profile details ul {
-  list-style: none;
-  padding: 0.5rem 0; /* Padding vertical */
-  margin: 0; /* Sin margen */
-  /* Aparece hacia ARRIBA */
-  position: absolute;
-  bottom: calc(100% + 5px); /* Justo encima del summary */
-  left: 0.5rem;
-  right: 0.5rem;
-  background: var(--bg-sidebar-hover); /* Fondo un poco más claro que el sidebar */
-  border: 1px solid var(--sidebar-border-color);
-  box-shadow: 0 -4px 10px rgba(0,0,0,0.2); /* Sombra hacia arriba */
-  border-radius: var(--border-radius);
-  z-index: 10;
-}
-.navbar-profile details ul li a {
-  color: var(--text-light);
-  text-decoration: none;
-  padding: 0.75rem 1rem;
-  display: block;
-  border-radius: 4px; /* Redondeo leve */
-  white-space: nowrap; /* Prevent wrapping */
-}
-.navbar-profile details ul li a:hover {
-  background-color: var(--primary); /* Fondo azul al pasar el ratón */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-light, #ecf0f1);
 }
 
+.user-avatar {
+    font-size: 1.5rem;
+    color: #3498db; /* Un toque de color azul para el icono del usuario */
+}
+
+.user-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.user-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    background: transparent;
+    color: var(--text-muted, #95a5a6);
+    border: none;
+    padding: 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ecf0f1;
+}
+
+.btn-logout:hover {
+    background-color: rgba(231, 76, 60, 0.2); /* Fondo rojizo suave al pasar el mouse */
+    color: #e74c3c; /* Icono rojo de salir */
+}
 
 /* ===== 5. TARJETAS (CONTENIDO CLARO) ===== */
 .card {
